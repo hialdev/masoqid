@@ -1,0 +1,183 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
+import { DashboardContent } from 'src/layouts/dashboard';
+import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+import { Label } from 'src/components/label';
+import { Scrollbar } from 'src/components/scrollbar';
+import useAttendanceStore, { Attendance } from 'src/stores/attendance-store';
+import useUserStore from 'src/stores/user';
+import { fDateTime, fDate } from 'src/utils/format-time';
+
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { Iconify } from 'src/components/iconify';
+import { useBoolean } from 'minimal-shared/hooks';
+import AttendanceDetailDialog from 'src/views/dashboard/attendance/attendance-detail-dialog';
+import AttendanceTableToolbar from './attendance-table-toolbar';
+
+export function AttendanceListView() {
+   const { getAllAttendance, attendances } = useAttendanceStore();
+   const { all: getAllUsers } = useUserStore();
+   const detailDialog = useBoolean();
+   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+
+   const [filters, setFilters] = useState({
+      start_date: null,
+      end_date: null,
+      type: 'all',
+      status: 'all',
+      user_ids: '',
+   });
+
+   const [employeeOptions, setEmployeeOptions] = useState<{ id: string; name: string }[]>([]);
+
+   useEffect(() => {
+      const fetchUsers = async () => {
+         const response = await getAllUsers({ sort: 'name', order: 'asc' });
+         if (response && response.data && Array.isArray(response.data.data)) {
+            setEmployeeOptions(
+               response.data.data.map((user: any) => ({ id: user.id, name: user.name }))
+            );
+         }
+      };
+      fetchUsers();
+   }, [getAllUsers]);
+
+   const handleFilters = useCallback((name: string, value: any) => {
+      setFilters((prevState) => ({
+         ...prevState,
+         [name]: value,
+      }));
+   }, []);
+
+   useEffect(() => {
+      const params: any = {};
+      if (filters.start_date) params.start_date = fDate(filters.start_date);
+      if (filters.end_date) params.end_date = fDate(filters.end_date);
+      if (filters.type !== 'all') params.type = filters.type;
+      if (filters.status !== 'all') params.status = filters.status;
+      if (filters.user_ids) params.user_ids = filters.user_ids;
+
+      getAllAttendance(params);
+   }, [getAllAttendance, filters]);
+
+   const handleViewRow = (row: Attendance) => {
+      setSelectedAttendance(row);
+      detailDialog.onTrue();
+   };
+
+   return (
+      <DashboardContent>
+         <CustomBreadcrumbs
+            heading="Attendance Report"
+            links={[{ name: 'Dashboard', href: '/dashboard' }, { name: 'Attendance' }]}
+            sx={{ mb: 3 }}
+         />
+
+         <Card>
+            <AttendanceTableToolbar
+               filters={filters}
+               onFilters={handleFilters}
+               typeOptions={['CHECK_IN', 'CHECK_OUT']}
+               statusOptions={['VALID', 'SUSPICIOUS', 'INVALID']}
+               employeeOptions={employeeOptions}
+            />
+
+            <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
+               <Scrollbar>
+                  <Table sx={{ minWidth: 960 }}>
+                     <TableHead>
+                        <TableRow>
+                           <TableCell>Employee</TableCell>
+                           <TableCell>Type</TableCell>
+                           <TableCell>Time</TableCell>
+                           <TableCell>Status</TableCell>
+                           <TableCell>Score</TableCell>
+                           <TableCell>Photo</TableCell>
+                           <TableCell align="center">Action</TableCell>
+                        </TableRow>
+                     </TableHead>
+                     <TableBody>
+                        {attendances.map((row: Attendance) => (
+                           <TableRow key={row.id}>
+                              <TableCell>
+                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Avatar
+                                       alt={row.user?.name}
+                                       src={row.user?.image}
+                                       sx={{ mr: 2 }}
+                                    />
+                                    <Typography variant="body2" noWrap>
+                                       {row.user?.name || 'Unknown'}
+                                    </Typography>
+                                 </Box>
+                              </TableCell>
+                              <TableCell>
+                                 <Label
+                                    color={
+                                       row.attendance_type === 'CHECK_IN' ? 'success' : 'warning'
+                                    }
+                                 >
+                                    {row.attendance_type}
+                                 </Label>
+                              </TableCell>
+                              <TableCell>{fDateTime(row.attendance_time)}</TableCell>
+                              <TableCell>
+                                 <Label
+                                    color={
+                                       row.status === 'VALID'
+                                          ? 'success'
+                                          : row.status === 'SUSPICIOUS'
+                                            ? 'warning'
+                                            : 'error'
+                                    }
+                                 >
+                                    {row.status}
+                                 </Label>
+                              </TableCell>
+                              <TableCell>{row.suspicious_score}</TableCell>
+                              <TableCell>
+                                 <Avatar
+                                    src={
+                                       row.photo_url?.startsWith('http')
+                                          ? row.photo_url
+                                          : `${process.env.NEXT_PUBLIC_API_HOST}/${row.photo_url}`
+                                    }
+                                    variant="rounded"
+                                    sx={{ width: 48, height: 48 }}
+                                 />
+                              </TableCell>
+                              <TableCell align="center">
+                                 <Tooltip title="View Details">
+                                    <IconButton onClick={() => handleViewRow(row)}>
+                                       <Iconify icon="solar:eye-bold" />
+                                    </IconButton>
+                                 </Tooltip>
+                              </TableCell>
+                           </TableRow>
+                        ))}
+                     </TableBody>
+                  </Table>
+               </Scrollbar>
+            </TableContainer>
+
+            <AttendanceDetailDialog
+               open={detailDialog.value}
+               onClose={detailDialog.onFalse}
+               attendance={selectedAttendance}
+            />
+         </Card>
+      </DashboardContent>
+   );
+}
