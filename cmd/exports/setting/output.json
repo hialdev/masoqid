@@ -1,0 +1,25 @@
+[
+  {
+    "name": "Dashboard",
+    "description": "Dashboard settings",
+    "icon": "solar:widget-2-bold-duotone",
+    "settings": [
+      {
+        "name": "Logo Dashboard",
+        "set_key": "dash.logo",
+        "set_value": "uploads/settings/1764779126166404000_1082b233d0734d9db2d58960d19af578_Zeettt.com.svg",
+        "set_type": "image",
+        "set_options": "",
+        "is_urgent": true
+      },
+      {
+        "name": "Favicon",
+        "set_key": "dash.favicon",
+        "set_value": "uploads/settings/1764779126165700000_50ecf757a0a0451b98122ef175250fbc_Zeettt.com.svg",
+        "set_type": "image",
+        "set_options": "",
+        "is_urgent": true
+      }
+    ]
+  }
+]
