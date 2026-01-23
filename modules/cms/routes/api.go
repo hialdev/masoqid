@@ -48,7 +48,8 @@ func SetupCMSRoutes(app *fiber.App, db *gorm.DB) {
 	attendanceGroup.Use(middlewares.JWTProtected())
 	attendanceGroup.Post("/check-in", attHandler.CheckIn)
 	attendanceGroup.Post("/check-out", attHandler.CheckOut)
-	attendanceGroup.Get("/", middlewares.DoACL("Read Attendance"), attHandler.GetAllAttendance) // GET /attendance
+	attendanceGroup.Get("/", middlewares.DoACL("Read Attendance"), attHandler.GetAllAttendance)       // GET /attendance
+	attendanceGroup.Get("/export", middlewares.DoACL("Read Attendance"), attHandler.ExportAttendance) // GET /attendance/export
 
 	// My Attendance
 	api.Get("/my-attendance", middlewares.JWTProtected(), attHandler.GetMyAttendance)
@@ -63,5 +64,6 @@ func SetupCMSRoutes(app *fiber.App, db *gorm.DB) {
 	office.Use(middlewares.DoACL("Update Office")).Patch("/:id", officeHandler.UpdateOffice)
 	office.Use(middlewares.DoACL("Delete Office")).Delete("/:id", officeHandler.DeleteOffice)
 	office.Use(middlewares.DoACL("Assign Office")).Post("/:id/assign-users", officeHandler.AssignUsers)
+	office.Use(middlewares.DoACL("Import Office")).Post("/:id/import-employees", officeHandler.ImportEmployees) // NEW
 	office.Use(middlewares.DoACL("Read Office")).Get("/:id/users", officeHandler.GetOfficeUsers)
 }
