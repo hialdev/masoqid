@@ -30,12 +30,12 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		Purpose string `json:"purpose" validate:"oneof=register changes verify login"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return utils.RespApi(c, "bad", "Input tidak valid", err.Error())
+		return utils.SecureRespApi(c, "bad", "Input tidak valid", err.Error(), true)
 	}
 
 	accessToken, refreshToken, user, permissions, err := h.Service.Login(input.Login, input.Code, input.Purpose)
 	if err != nil {
-		return utils.RespApi(c, "perm", "Login gagal", err.Error())
+		return utils.SecureRespApi(c, "perm", "Login gagal", err.Error(), true)
 	}
 
 	httpOnly := false
@@ -87,11 +87,11 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	})
 
 	// Respons tetap kirim data user (untuk client jika perlu)
-	return utils.RespApi(c, "ok", "Login berhasil", fiber.Map{
+	return utils.SecureRespApi(c, "ok", "Login berhasil", fiber.Map{
 		"user":        user,
 		"permissions": permissions,
 		// accessToken TIDAK dikirim di body → lebih aman
-	})
+	}, true)
 }
 
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
@@ -105,52 +105,52 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	}{}
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.RespApi(c, "bad", "Invalid input", err.Error())
+		return utils.SecureRespApi(c, "bad", "Invalid input", err.Error(), true)
 	}
 
 	if err := utils.Validate.Struct(input); err != nil {
-		return utils.RespApi(c, "bad", "Validasi gagal", err.Error())
+		return utils.SecureRespApi(c, "bad", "Validasi gagal", err.Error(), true)
 	}
 
 	user, err := h.Service.Register(input.Phone, input.CountryCode, input.Name, input.Username, input.Email, input.IsEmail)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return utils.RespApi(c, "empty", "Data tidak ditemukan", nil)
+			return utils.SecureRespApi(c, "empty", "Data tidak ditemukan", nil, true)
 		}
-		return utils.RespApi(c, "ise", "Gagal registrasi akun", err.Error())
+		return utils.SecureRespApi(c, "ise", "Gagal registrasi akun", err.Error(), true)
 	}
 
-	return utils.RespApi(c, "ok", "Register berhasil", user)
+	return utils.SecureRespApi(c, "ok", "Register berhasil", user, true)
 }
 
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	if err := h.Service.Logout(c); err != nil {
-		return utils.RespApi(c, "ise", "Ada kesalahan saat Logout", err.Error())
+		return utils.SecureRespApi(c, "ise", "Ada kesalahan saat Logout", err.Error(), true)
 	}
 
-	return utils.RespApi(c, "ok", "Logout berhasil", nil)
+	return utils.SecureRespApi(c, "ok", "Logout berhasil", nil, true)
 }
 
 // -------------------------------------------------------------
 func (h *AuthHandler) CheckAccessToken(c *fiber.Ctx) error {
 	fmap, err := h.Service.CheckAccessToken(c)
 	if err != nil {
-		return utils.RespApi(c, "ise", "Terdapat kesalahan saat cek akses token", err.Error())
+		return utils.SecureRespApi(c, "ise", "Terdapat kesalahan saat cek akses token", err.Error(), true)
 	}
-	return utils.RespApi(c, "ok", "Token Valid", fmap)
+	return utils.SecureRespApi(c, "ok", "Token Valid", fmap, true)
 }
 
 // REFRESH TOKEN - Updated to regenerate permissions
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	fmap, err := h.Service.RefreshToken(c)
 	if err != nil {
-		return utils.RespApi(c, "ise", "Terdapat kesalahan saat cek refresh token", err.Error())
+		return utils.SecureRespApi(c, "ise", "Terdapat kesalahan saat cek refresh token", err.Error(), true)
 	}
 
 	// Ambil accessToken baru dari respons service
 	accessToken, ok := fmap["access_token"].(string)
 	if !ok {
-		return utils.RespApi(c, "ise", "Access token tidak valid", nil)
+		return utils.SecureRespApi(c, "ise", "Access token tidak valid", nil, true)
 	}
 
 	httpOnly := false
@@ -184,20 +184,20 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	})
 
 	// Kirim hanya data yang perlu ke client
-	return utils.RespApi(c, "ok", "Berhasil memperbarui token", fiber.Map{
+	return utils.SecureRespApi(c, "ok", "Berhasil memperbarui token", fiber.Map{
 		"user":         fmap["user"],
 		"access_token": accessToken,
 		"permissions":  fmap["permissions"],
-	})
+	}, true)
 }
 
 // Check user ada atau tidak berdasarkan id
 func (h *AuthHandler) CheckUserExist(c *fiber.Ctx) error {
 	if err := h.Service.CheckUserExist(c); err != nil {
-		return utils.RespApi(c, "ise", err.Error(), nil)
+		return utils.SecureRespApi(c, "ise", err.Error(), nil, true)
 	}
 
-	return utils.RespApi(c, "ok", "User ditemukan!", nil)
+	return utils.SecureRespApi(c, "ok", "User ditemukan!", nil, true)
 }
 
 // Check Registered User
@@ -208,24 +208,24 @@ func (h *AuthHandler) CheckRegistered(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.RespApi(c, "bad", "Request Body tidak valid", err.Error())
+		return utils.SecureRespApi(c, "bad", "Request Body tidak valid", err.Error(), true)
 	}
 
 	if input.Phone == "" && input.Email == "" {
-		return utils.RespApi(c, "bad", "Harus ada salah satu antara Email atau Phone", nil)
+		return utils.SecureRespApi(c, "bad", "Harus ada salah satu antara Email atau Phone", nil, true)
 	}
 
 	if err := utils.Validate.Struct(input); err != nil {
 		if verrs, ok := err.(validator.ValidationErrors); ok {
-			return utils.RespApi(c, "bad", "Validasi gagal", verrs.Translate(utils.Translator))
+			return utils.SecureRespApi(c, "bad", "Validasi gagal", verrs.Translate(utils.Translator), true)
 		}
-		return utils.RespApi(c, "bad", "Validasi gagal", err.Error())
+		return utils.SecureRespApi(c, "bad", "Validasi gagal", err.Error(), true)
 	}
 
 	user, err := h.Service.CheckRegistered(input.Phone, input.Email)
 	if err != nil {
-		return utils.RespApi(c, "ise", "Ada kesalahan saat check registrasi", err.Error())
+		return utils.SecureRespApi(c, "ise", "Ada kesalahan saat check registrasi", err.Error(), true)
 	}
 
-	return utils.RespApi(c, "ok", "User Terdaftar di Database", user)
+	return utils.SecureRespApi(c, "ok", "User Terdaftar di Database", user, true)
 }

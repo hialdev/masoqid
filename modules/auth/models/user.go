@@ -17,6 +17,8 @@ type User struct {
 	PhoneVerifiedAt *bool      `json:"phone_verified_at,omitempty" validate:"omitempty,boolean"`
 	Image           *string    `json:"image" gorm:"text;omitempty"`
 	RoleID          *uuid.UUID `json:"role_id,omitempty"`
+	OfficeID        *uuid.UUID `json:"office_id,omitempty" gorm:"type:char(36);index"` // ✅ Office assignment (optional)
 
-	Role Role `json:"role,omitempty" gorm:"foreignKey:RoleID;constraint:SET NULL;"`
+	Role   Role        `json:"role,omitempty" gorm:"foreignKey:RoleID;constraint:SET NULL;"`
+	Office interface{} `json:"office,omitempty" gorm:"-"` // ✅ Will be populated manually to avoid circular import
 }

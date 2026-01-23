@@ -107,7 +107,8 @@ func (s *AuthService) Login(login, code, purpose string) (string, string, models
 		return "", "", models.User{}, nil, err
 	}
 
-	accessToken, _ := generateTokenWithPermissions(user.ID.String(), "access", time.Hour, permissions)
+	// ✅ Generate token WITHOUT permissions - permissions will be fetched via API
+	accessToken, _ := generateToken(user.ID.String(), "access", time.Hour)
 	refreshToken, _ := generateToken(user.ID.String(), "refresh", time.Hour*24*7)
 
 	// simpan refresh token
@@ -345,20 +346,13 @@ func (s *AuthService) CheckAccessToken(c *fiber.Ctx) (fiber.Map, error) {
 		return nil, errors.New("token bukan access token")
 	}
 
-	// ✅ Simpan langsung ke Locals — biarkan middleware ACL yang handle
-	if claims["permissions"] != nil {
-		c.Locals("permissions", claims["permissions"])
-	} else {
-		c.Locals("permissions", []string{})
-	}
-
+	// ✅ Set user context - permissions will be fetched via separate API call
 	c.Locals("user_id", claims["user_id"])
 	c.Locals("user", token)
 
-	// ✅ Return data untuk keperluan debugging/frontend jika perlu
+	// ✅ Return data untuk keperluan debugging/frontend
 	return fiber.Map{
-		"user_id":     claims["user_id"],
-		"permissions": claims["permissions"], // return as-is
+		"user_id": claims["user_id"],
 	}, nil
 }
 
@@ -413,20 +407,20 @@ func (s *AuthService) RefreshToken(c *fiber.Ctx) (fiber.Map, error) {
 
 	fmt.Println("DEBUG: Token validation successful, generating new tokens")
 
-	// Get fresh permissions for the user
+	// Get fresh permissions for the user (will be returned to frontend to update store)
 	permissions, err := s.GetUserPermissions(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Generate access token baru dengan permissions terbaru
-	newAccessToken, _ := generateTokenWithPermissions(userID, "access", time.Hour, permissions)
+	// ✅ Generate access token WITHOUT permissions - frontend will fetch via /auth/permissions
+	newAccessToken, _ := generateToken(userID, "access", time.Hour)
 
 	return fiber.Map{
 		"access_token":  newAccessToken,
 		"refresh_token": refreshToken,
 		"user_id":       userID,
-		"permissions":   permissions,
+		"permissions":   permissions, // Still return for frontend to update store
 	}, nil
 }
 

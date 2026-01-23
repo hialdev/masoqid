@@ -67,20 +67,20 @@ func (h *ProfileHandler) Get(c *fiber.Ctx) error {
 
 	id, err := uuid.Parse(userID)
 	if err != nil {
-		return utils.RespApi(c, "bad", "ID yang diberikan tidak valid", nil)
+		return utils.SecureRespApi(c, "bad", "ID yang diberikan tidak valid", nil, false)
 	}
 
 	var profile models.User
 	if err := h.DB.Preload("Role.Permissions").First(&profile, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return utils.RespApi(c, "empty", "User tidak ditemukan", nil)
+			return utils.SecureRespApi(c, "empty", "User tidak ditemukan", nil, false)
 		}
 	}
-	return utils.RespApi(c, "ok", "Berhasil mengambil data profile", profile)
+	return utils.SecureRespApi(c, "ok", "Berhasil mengambil data profile", profile, false)
 }
 
 func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
-	
+
 	// Input Struct dan Validasi
 	var input ProfileUpdateBasicInput
 
@@ -92,15 +92,15 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 		input.Username = &usernameVal
 	} else {
 		if err := c.BodyParser(&input); err != nil {
-			return utils.RespApi(c, "bad", "Invalid input", err.Error())
+			return utils.SecureRespApi(c, "bad", "Invalid input", err.Error(), false)
 		}
 	}
-	
+
 	if err := utils.Validate.Struct(input); err != nil {
 		if verrs, ok := err.(validator.ValidationErrors); ok {
-			return utils.RespApi(c, "bad", "Validasi gagal", verrs.Translate(utils.Translator))
+			return utils.SecureRespApi(c, "bad", "Validasi gagal", verrs.Translate(utils.Translator), false)
 		}
-		return utils.RespApi(c, "bad", "Validasi gagal", err.Error())
+		return utils.SecureRespApi(c, "bad", "Validasi gagal", err.Error(), false)
 	}
 
 	// -----------------------
@@ -131,12 +131,12 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 
 	id, err := uuid.Parse(userID)
 	if err != nil {
-		return utils.RespApi(c, "bad", "ID yang diberikan tidak valid", nil)
+		return utils.SecureRespApi(c, "bad", "ID yang diberikan tidak valid", nil, false)
 	}
 
 	var user models.User
 	if err := h.DB.First(&user, "id = ?", id).Error; err != nil {
-		return utils.RespApi(c, "empty", "User tidak ditemukan", err.Error())
+		return utils.SecureRespApi(c, "empty", "User tidak ditemukan", err.Error(), false)
 	}
 
 	// Map untuk menyimpan perubahan
@@ -152,7 +152,7 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 		var count int64
 		h.DB.Model(&models.User{}).Where("username = ? AND id != ?", input.Username, id).Count(&count)
 		if count > 0 {
-			return utils.RespApi(c, "bad", "Username sudah digunakan", nil)
+			return utils.SecureRespApi(c, "bad", "Username sudah digunakan", nil, false)
 		}
 		updUser["username"] = input.Username
 	}
@@ -167,7 +167,7 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 
 		filePath, err := utils.UpdateFile(c, oldImagePath, "image", "users")
 		if err != nil {
-			return utils.RespApi(c, "bad", "Gagal memperbarui image User", err.Error())
+			return utils.SecureRespApi(c, "bad", "Gagal memperbarui image User", err.Error(), false)
 		}
 
 		updUser["image"] = filePath
@@ -180,14 +180,14 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 	// --- Lakukan Update Hanya Jika Ada Perubahan ---
 	if len(updUser) > 0 {
 		if err := h.DB.Model(&user).Updates(updUser).Error; err != nil {
-			return utils.RespApi(c, "ise", "Gagal Memperbarui User", err.Error())
+			return utils.SecureRespApi(c, "ise", "Gagal Memperbarui User", err.Error(), false)
 		}
 	}
 
 	// --- Reload User ---
 	var updatedUser models.User
 	if err := h.DB.Preload("Role").First(&updatedUser, id).Error; err != nil {
-		return utils.RespApi(c, "ise", "Gagal mengambil data user setelah update", err.Error())
+		return utils.SecureRespApi(c, "ise", "Gagal mengambil data user setelah update", err.Error(), false)
 	}
 
 	userName := "User"
@@ -196,7 +196,7 @@ func (h *ProfileHandler) UpdateBasic(c *fiber.Ctx) error {
 	}
 	connection.DeleteKeysByPattern(c.Context(), "users:*")
 
-	return utils.RespApi(c, "ok", userName+" berhasil diperbarui", updatedUser)
+	return utils.SecureRespApi(c, "ok", userName+" berhasil diperbarui", updatedUser, false)
 }
 
 func (h *ProfileHandler) UpdateEmail(c *fiber.Ctx) error {

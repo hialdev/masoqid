@@ -57,6 +57,7 @@ func SetupAuthRoutes(app *fiber.App, db *gorm.DB) {
 	protected.Use(middlewares.JWTProtected())
 	protected.Post("/checktoken", auth.CheckAccessToken)
 	protected.Post("/logout", auth.Logout)
+	protected.Get("/permissions", auth.GetMyPermissions) // ✅ New endpoint for fetching permissions
 
 	// --------------- Profile Routes
 	profile := handlers.NewProfileHandler(db)
@@ -77,6 +78,7 @@ func SetupAuthRoutes(app *fiber.App, db *gorm.DB) {
 	usr.Use(middlewares.DoACL("Update User")).Post("/:id", userHandler.Update)
 	usr.Use(middlewares.DoACL("Read User")).Get("/:id", userHandler.GetUser)
 	usr.Use(middlewares.DoACL("Assign User")).Post("/:id/assign", userHandler.AssignRole)
+	usr.Use(middlewares.DoACL("Assign Office")).Post("/:id/assign-office", userHandler.AssignOffice) // ✅ NEW
 
 	roles := handlers.NewRoleHandler(db)
 	rl := api.Group("/roles")

@@ -50,18 +50,11 @@ func JWTProtected() fiber.Handler {
 		userID, _ := claims["user_id"].(string)
 		var user models.User
 		if err := connection.DB.First(&user, "id = ?", userID).Error; err != nil {
-			return utils.RespApi(c, "ise", "User tidak ditemukan!", err.Error());
+			return utils.RespApi(c, "ise", "User tidak ditemukan!", err.Error())
 		}
 		fmt.Printf("✅ User ID: %s\n", userID)
 
-		// Simpan ke locals
-		if perms, exists := claims["permissions"]; exists {
-			fmt.Printf("✅ Permissions in token: %+v (type: %T)\n", perms, perms)
-			c.Locals("permissions", perms)
-		} else {
-			c.Locals("permissions", []interface{}{})
-		}
-
+		// ✅ Simpan user context - permissions akan di-fetch dari database oleh ACL middleware
 		c.Locals("user", token)
 		c.Locals("user_id", claims["user_id"])
 

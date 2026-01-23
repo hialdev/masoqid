@@ -52,4 +52,16 @@ func SetupCMSRoutes(app *fiber.App, db *gorm.DB) {
 
 	// My Attendance
 	api.Get("/my-attendance", middlewares.JWTProtected(), attHandler.GetMyAttendance)
+
+	// ✅ Office Routes
+	officeHandler := handlers.NewOfficeHandler(db)
+	office := api.Group("/offices")
+	office.Use(middlewares.JWTProtected())
+	office.Use(middlewares.DoACL("Read Office")).Get("/", officeHandler.GetAllOffices)
+	office.Use(middlewares.DoACL("Read Office")).Get("/:id", officeHandler.GetOffice)
+	office.Use(middlewares.DoACL("Add Office")).Post("/", officeHandler.CreateOffice)
+	office.Use(middlewares.DoACL("Update Office")).Patch("/:id", officeHandler.UpdateOffice)
+	office.Use(middlewares.DoACL("Delete Office")).Delete("/:id", officeHandler.DeleteOffice)
+	office.Use(middlewares.DoACL("Assign Office")).Post("/:id/assign-users", officeHandler.AssignUsers)
+	office.Use(middlewares.DoACL("Read Office")).Get("/:id/users", officeHandler.GetOfficeUsers)
 }

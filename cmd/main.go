@@ -52,17 +52,20 @@ func main() {
 	//Migration
 	connection.DB.AutoMigrate(
 		// Auth + RBAC
-		&models.User{},
 		&models.Role{},
 		&models.Permission{},
 		&models.Otp{},
 
-		// CMS
+		// CMS - Office must be created first before User (FK constraint)
+		&CMSModels.Office{},
 		&CMSModels.SettingGroup{},
 		&CMSModels.Setting{},
 		&CMSModels.ExampleRich{},
 		&CMSModels.Attendance{},
 		&CMSModels.AttendanceSuspiciousLog{},
+
+		// User last because it has FK to Office
+		&models.User{},
 	)
 
 	routes.InitRoutes(app, connection.DB)

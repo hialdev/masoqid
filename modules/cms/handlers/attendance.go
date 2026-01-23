@@ -143,6 +143,50 @@ func (h *AttendanceHandler) handleAttendance(c *fiber.Ctx, bgType string) error 
 		return utils.RespApi(c, "bad", "Location is required", nil)
 	}
 
+	// ✅ VALIDATE OFFICE RADIUS
+	var user authModels.User
+	if err := h.DB.First(&user, "id = ?", userID).Error; err != nil {
+		return utils.RespApi(c, "ise", "Failed to get user data", err.Error())
+	}
+
+	// Check if user has office assigned and office has strict radius enabled
+	if user.OfficeID != nil {
+		var office models.Office
+		if err := h.DB.First(&office, "id = ?", user.OfficeID).Error; err == nil {
+			// Check if strict radius is enabled
+			if office.IsStrictRadius {
+				// Check if validation required for this attendance type
+				requireValidation := false
+				if bgType == "CHECK_IN" && office.RadiusForCheckin {
+					requireValidation = true
+				}
+				if bgType == "CHECK_OUT" && office.RadiusForCheckout {
+					requireValidation = true
+				}
+
+				if requireValidation {
+					// Calculate distance using Haversine formula
+					distance := utils.CalculateDistance(
+						input.Latitude, input.Longitude,
+						office.Latitude, office.Longitude,
+					)
+
+					// Check if user is within allowed radius
+					if distance > office.RadiusAllow {
+						return utils.RespApi(c, "bad", fmt.Sprintf(
+							"Anda berada %.0f meter dari kantor %s. Radius maksimal yang diizinkan adalah %.0f meter",
+							distance, office.Name, office.RadiusAllow,
+						), fiber.Map{
+							"distance":       distance,
+							"allowed_radius": office.RadiusAllow,
+							"office_name":    office.Name,
+						})
+					}
+				}
+			}
+		}
+	}
+
 	// Logic scoring
 	score := 0
 	var logs []models.AttendanceSuspiciousLog

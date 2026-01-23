@@ -435,3 +435,46 @@ func (h *UserHandler) AssignRole(c *fiber.Ctx) error {
 
 	return utils.RespApi(c, "ok", "User "+userName+" sekarang memiliiki Role "+role.Name, user)
 }
+
+// AssignOffice - POST /api/users/:id/assign-office
+func (h *UserHandler) AssignOffice(c *fiber.Ctx) error {
+	idStr := c.Params("id")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		return utils.RespApi(c, "bad", "User ID yang diberikan tidak valid", nil)
+	}
+
+	var input struct {
+		OfficeID *uuid.UUID `json:"office_id"` // Nullable - null means remove assignment
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		return utils.RespApi(c, "bad", "Invalid input", err.Error())
+	}
+
+	var user models.User
+	if err := h.DB.First(&user, "id = ?", userID).Error; err != nil {
+		return utils.RespApi(c, "ise", "Gagal mendapatkan user", err.Error())
+	}
+
+	// Update user's office_id
+	if err := h.DB.Model(&user).Update("office_id", input.OfficeID).Error; err != nil {
+		return utils.RespApi(c, "ise", "Gagal assign office ke user", err.Error())
+	}
+
+	var userName string
+	if user.Name != nil {
+		userName = *user.Name
+	} else {
+		userName = ""
+	}
+
+	connection.DeleteKeysByPattern(c.Context(), "users:*")
+
+	message := "User " + userName + " berhasil di-assign ke office"
+	if input.OfficeID == nil {
+		message = "User " + userName + " berhasil di-remove dari office"
+	}
+
+	return utils.RespApi(c, "ok", message, user)
+}
