@@ -51,12 +51,15 @@ const useOfficeStore = create<OfficeState>((set, get) => ({
             offices: res.data.data.data || [],
             loading: false,
          });
+
+         return res.data.data.data || [];
       } catch (err: any) {
          console.error('Get offices error:', err);
          set({
             error: err.response?.data?.message || 'Failed to fetch offices',
             loading: false,
          });
+         return [];
       }
    },
 

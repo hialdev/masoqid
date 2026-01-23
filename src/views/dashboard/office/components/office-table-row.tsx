@@ -23,6 +23,8 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { CustomPopover } from 'src/components/custom-popover';
 
 import { AssignUsersModal } from './assign-users-modal';
+import { ImportEmployeesModal } from './import-employees-modal';
+import { OfficeEmployeesModal } from './office-employees-modal';
 
 // ----------------------------------------------------------------------
 
@@ -39,6 +41,8 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
    const menuActions = usePopover();
    const confirmDialog = useBoolean();
    const assignUsersModal = useBoolean();
+   const importModal = useBoolean();
+   const employeesModal = useBoolean();
 
    const renderAssignUsersModal = () => (
       <AssignUsersModal
@@ -46,6 +50,26 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
          open={assignUsersModal.value}
          onClose={assignUsersModal.onFalse}
          onSuccess={onSuccess}
+      />
+   );
+
+   const renderImportModal = () => (
+      <ImportEmployeesModal
+         open={importModal.value}
+         onClose={importModal.onFalse}
+         officeId={row.id}
+         officeName={row.name}
+         onSuccess={onSuccess}
+      />
+   );
+
+   const renderEmployeesModal = () => (
+      <OfficeEmployeesModal
+         open={employeesModal.value}
+         onClose={employeesModal.onFalse}
+         officeId={row.id}
+         officeName={row.name}
+         userCount={row.user_count || 0}
       />
    );
 
@@ -75,6 +99,16 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
             >
                <Iconify icon="solar:users-group-rounded-bold" />
                Assign Users
+            </MenuItem>
+
+            <MenuItem
+               onClick={() => {
+                  importModal.onTrue();
+                  menuActions.onClose();
+               }}
+            >
+               <Iconify icon="solar:import-bold" />
+               Import Employees
             </MenuItem>
 
             <MenuItem
@@ -137,7 +171,14 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
             </TableCell>
 
             <TableCell align="center">
-               <Chip label={row.user_count || 0} size="small" color="primary" variant="soft" />
+               <Chip
+                  label={row.user_count || 0}
+                  size="small"
+                  color="primary"
+                  variant="soft"
+                  onClick={employeesModal.onTrue}
+                  sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.lighter' } }}
+               />
             </TableCell>
 
             <TableCell>
@@ -169,6 +210,8 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
          </TableRow>
 
          {renderAssignUsersModal()}
+         {renderImportModal()}
+         {renderEmployeesModal()}
          {renderMenuActions()}
          {renderConfirmDialog()}
       </>

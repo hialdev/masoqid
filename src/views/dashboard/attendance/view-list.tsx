@@ -11,26 +11,38 @@ import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { useBoolean } from 'minimal-shared/hooks';
+
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { Label } from 'src/components/label';
 import { Scrollbar } from 'src/components/scrollbar';
-import useAttendanceStore, { Attendance } from 'src/stores/attendance-store';
-import useUserStore from 'src/stores/user';
+import { Iconify } from 'src/components/iconify';
 import { fDateTime, fDate } from 'src/utils/format-time';
 
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import { Iconify } from 'src/components/iconify';
-import { useBoolean } from 'minimal-shared/hooks';
+import useAttendanceStore, { Attendance } from 'src/stores/attendance-store';
+import useUserStore from 'src/stores/user';
+import useOfficeStore from 'src/stores/office';
+
 import AttendanceDetailDialog from 'src/views/dashboard/attendance/attendance-detail-dialog';
 import AttendanceTableToolbar from './attendance-table-toolbar';
+import { ExportAttendanceDialog } from './components/export-attendance-dialog';
+import { CONFIG } from 'src/global-config';
 
 export function AttendanceListView() {
    const { getAllAttendance, attendances } = useAttendanceStore();
    const { all: getAllUsers } = useUserStore();
+   const { getAll: getAllOffices } = useOfficeStore();
+
    const detailDialog = useBoolean();
+   const exportDialog = useBoolean();
+
    const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+   const [employeeOptions, setEmployeeOptions] = useState<{ id: string; name: string }[]>([]);
+   const [officeOptions, setOfficeOptions] = useState<{ id: string; name: string }[]>([]);
 
    const [filters, setFilters] = useState({
       start_date: null,
@@ -40,19 +52,31 @@ export function AttendanceListView() {
       user_ids: '',
    });
 
-   const [employeeOptions, setEmployeeOptions] = useState<{ id: string; name: string }[]>([]);
-
+   // Fetch users and offices
    useEffect(() => {
-      const fetchUsers = async () => {
-         const response = await getAllUsers({ sort: 'name', order: 'asc' });
-         if (response && response.data && Array.isArray(response.data.data)) {
-            setEmployeeOptions(
-               response.data.data.map((user: any) => ({ id: user.id, name: user.name }))
-            );
+      const fetchData = async () => {
+         try {
+            // Users
+            const userResponse = await getAllUsers({ sort: 'name', order: 'asc' });
+            if (userResponse && userResponse.data && Array.isArray(userResponse.data.data)) {
+               setEmployeeOptions(
+                  userResponse.data.data.map((user: any) => ({ id: user.id, name: user.name }))
+               );
+            }
+
+            // Offices
+            const officeResponse = await getAllOffices({ limit: 1000 });
+            if (officeResponse && Array.isArray(officeResponse)) {
+               setOfficeOptions(
+                  officeResponse.map((office: any) => ({ id: office.id, name: office.name }))
+               );
+            }
+         } catch (error) {
+            console.error('Error fetching data:', error);
          }
       };
-      fetchUsers();
-   }, [getAllUsers]);
+      fetchData();
+   }, [getAllUsers, getAllOffices]);
 
    const handleFilters = useCallback((name: string, value: any) => {
       setFilters((prevState) => ({
@@ -82,6 +106,15 @@ export function AttendanceListView() {
          <CustomBreadcrumbs
             heading="Attendance Report"
             links={[{ name: 'Dashboard', href: '/dashboard' }, { name: 'Attendance' }]}
+            action={
+               <Button
+                  variant="contained"
+                  startIcon={<Iconify icon="solar:export-bold" />}
+                  onClick={exportDialog.onTrue}
+               >
+                  Export Data
+               </Button>
+            }
             sx={{ mb: 3 }}
          />
 
@@ -152,7 +185,7 @@ export function AttendanceListView() {
                                     src={
                                        row.photo_url?.startsWith('http')
                                           ? row.photo_url
-                                          : `${process.env.NEXT_PUBLIC_API_HOST}/${row.photo_url}`
+                                          : `${CONFIG.apiHostUrl}/${row.photo_url}`
                                     }
                                     variant="rounded"
                                     sx={{ width: 48, height: 48 }}
@@ -176,6 +209,13 @@ export function AttendanceListView() {
                open={detailDialog.value}
                onClose={detailDialog.onFalse}
                attendance={selectedAttendance}
+            />
+
+            <ExportAttendanceDialog
+               open={exportDialog.value}
+               onClose={exportDialog.onFalse}
+               officeOptions={officeOptions}
+               userOptions={employeeOptions}
             />
          </Card>
       </DashboardContent>
