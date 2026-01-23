@@ -57,25 +57,30 @@ export const navData: NavSectionProps['data'] = [
             // In real app, restrict this to 'manager' role
             // allowedRoles: ['manager', 'admin'],
          },
-      ],
-   },
-   /**
-    * CRUD Management
-    */
-   {
-      subheader: 'Content Management',
-      items: [
          {
-            title: 'Example Rich',
-            path: paths.dashboard.example_rich.root,
-            icon: icon('solar:calendar-add-bold-duotone'),
-            children: [
-               { title: 'Lists', path: paths.dashboard.example_rich.root },
-               { title: 'Create', path: paths.dashboard.example_rich.create },
-            ],
+            title: 'Offices',
+            path: paths.dashboard.office.root,
+            icon: icon('solar:buildings-2-bold-duotone'),
          },
       ],
    },
+   // /**
+   //  * CRUD Management
+   //  */
+   // {
+   //    subheader: 'Content Management',
+   //    items: [
+   //       {
+   //          title: 'Example Rich',
+   //          path: paths.dashboard.example_rich.root,
+   //          icon: icon('solar:calendar-add-bold-duotone'),
+   //          children: [
+   //             { title: 'Lists', path: paths.dashboard.example_rich.root },
+   //             { title: 'Create', path: paths.dashboard.example_rich.create },
+   //          ],
+   //       },
+   //    ],
+   // },
    /**
     * Management
     */

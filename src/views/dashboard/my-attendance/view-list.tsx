@@ -121,7 +121,7 @@ export function MyAttendanceListView() {
                               <TableCell>
                                  <Label
                                     color={
-                                       row.attendance_type === 'CHECK_IN' ? 'success' : 'warning'
+                                       row.attendance_type === 'CHECK_IN' ? 'primary' : 'warning'
                                     }
                                  >
                                     {row.attendance_type}

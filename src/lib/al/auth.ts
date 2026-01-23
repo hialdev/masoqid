@@ -21,22 +21,41 @@ export const getServerSession = cache(async (): Promise<Session | null> => {
    try {
       const { payload } = await jwtVerify(token, JWT_SECRET);
       if (!payload.user_id) return null;
-      const url = process.env.NEXT_PUBLIC_API_URL+'/auth/me/'+payload.user_id;
+
+      // ✅ Check if user exists
+      const url = process.env.NEXT_PUBLIC_API_URL + '/auth/me/' + payload.user_id;
       const check = await fetch(url, {
          method: 'POST',
          headers: {
-         'Content-Type': 'application/json',
-         }
-      })
+            'Content-Type': 'application/json',
+         },
+      });
       const res = await check.json();
-      console.log("[DEBUG] payload in auth ts check user",res)
-      if (!res.success){
-         return {userId: 'algans-cobalagi', permissions: []};
+      console.log('[DEBUG] payload in auth ts check user', res);
+      if (!res.success) {
+         return { userId: 'algans-cobalagi', permissions: [] };
       }
-      
+
+      // ✅ Fetch permissions from API instead of JWT
+      const permissionsUrl = process.env.NEXT_PUBLIC_API_URL + '/auth/permissions';
+      const permissionsRes = await fetch(permissionsUrl, {
+         method: 'GET',
+         headers: {
+            'Content-Type': 'application/json',
+            Cookie: `accessToken=${token}`,
+         },
+         credentials: 'include',
+      });
+
+      let permissions: string[] = [];
+      if (permissionsRes.ok) {
+         const permissionsData = await permissionsRes.json();
+         permissions = permissionsData.data || [];
+      }
+
       return {
          userId: payload.user_id as string,
-         permissions: Array.isArray(payload.permissions) ? (payload.permissions as string[]) : [],
+         permissions,
       };
    } catch (error) {
       // Token invalid/expired → biarkan AuthGuard redirect ke /api/auth/refresh

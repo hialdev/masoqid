@@ -26,7 +26,7 @@ export function NavProfileBottom({ sx, ...other }: BoxProps) {
                </Avatar>
 
                <Label
-                  color="success"
+                  color="primary"
                   variant="filled"
                   sx={{
                      top: -6,

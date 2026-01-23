@@ -112,6 +112,12 @@ export const paths = {
          check_in: `${ROOTS.DASHBOARD}/my-attendance/check-in`,
          check_out: `${ROOTS.DASHBOARD}/my-attendance/check-out`,
       },
+      // Office
+      office: {
+         root: `${ROOTS.DASHBOARD}/offices`,
+         create: `${ROOTS.DASHBOARD}/offices/create`,
+         edit: (id: string) => `${ROOTS.DASHBOARD}/offices/${id}/edit`,
+      },
       crud: {
          root: `${ROOTS.DASHBOARD}/crud`,
          new: `${ROOTS.DASHBOARD}/crud/new`,

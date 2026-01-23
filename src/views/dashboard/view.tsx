@@ -23,6 +23,8 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import useExampleRichStore from 'src/stores/example-rich';
 import useUserStore from 'src/stores/user';
 import useSettingStore from 'src/stores/setting';
+import useAttendanceStore from 'src/stores/attendance-store';
+import useOfficeStore from 'src/stores/office';
 
 // ----------------------------------------------------------------------
 
@@ -44,6 +46,8 @@ export function DashboardView() {
    const exampleRichStore = useExampleRichStore();
    const userStore = useUserStore();
    const settingStore = useSettingStore();
+   const attendanceStore = useAttendanceStore();
+   const officeStore = useOfficeStore();
 
    useEffect(() => {
       const fetchData = async () => {
@@ -51,27 +55,29 @@ export function DashboardView() {
 
          // Fetch all data from stores and get counts from API responses
          const [
-            exampleRichResponse,
             userResponse,
             settingResponse,
+            attendanceResponse,
+            officeResponse,
          ] = await Promise.allSettled([
-            exampleRichStore.all({ page: 1, limit: 1, sort: 'created_at', order: 'desc' }),
             userStore.all({ page: 1, limit: 1, sort: 'created_at', order: 'desc' }),
             settingStore.all(),
+            attendanceStore.getAllAttendance(),
+            officeStore.getAll(),
          ]);
 
          // Prepare widgets with data
          const widgetsData: WidgetItem[] = [
             {
-               title: 'Example Rich',
-               path: paths.dashboard.example_rich.root,
-               icon: 'solar:calendar-add-bold-duotone',
+               title: 'Attendances',
+               path: paths.dashboard.attendance,
+               icon: 'solar:clipboard-list-bold-duotone',
                count:
-                  exampleRichResponse.status === 'fulfilled' &&
-                  exampleRichResponse.value?.data?.pagination?.total
-                     ? exampleRichResponse.value.data.pagination.total
+                  attendanceResponse.status === 'fulfilled' &&
+                  attendanceResponse.value?.data?.total
+                     ? attendanceResponse.value.data.total
                      : 0,
-               color: 'warning',
+               color: 'success',
             },
             {
                title: 'Users',

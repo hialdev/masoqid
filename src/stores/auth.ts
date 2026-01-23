@@ -1,9 +1,9 @@
-import type { RoleData } from "./role";
+import type { RoleData } from './role';
 
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-import { api, protectedApi } from "../lib/al/axios";
+import { api, protectedApi } from '../lib/al/axios';
 
 interface AuthData {
    userId: string | null;
@@ -11,26 +11,50 @@ interface AuthData {
 }
 
 interface UserData {
-   id? : string | null,
-   username? : string,
-   email?: string,
-   phone?: string | number,
-   name?: string,
-   image?: string,
-   role?: RoleData | null
+   id?: string | null;
+   username?: string;
+   email?: string;
+   phone?: string | number;
+   name?: string;
+   image?: string;
+   role?: RoleData | null;
 }
 
 interface AuthState {
    authData: AuthData;
    user: UserData | null;
    isLoggedOut: boolean;
-   registData: {isEmail: boolean, phone: string | number | null, email: string | null, purpose: string | undefined | null};
+   registData: {
+      isEmail: boolean;
+      phone: string | number | null;
+      email: string | null;
+      purpose: string | undefined | null;
+   };
 
    getUser: () => void;
-   setRegist: ({isEmail, phone, email, purpose} : {isEmail: boolean, phone: string | number | null, email: string | null, purpose: string | undefined | null}) => void;
+   setRegist: ({
+      isEmail,
+      phone,
+      email,
+      purpose,
+   }: {
+      isEmail: boolean;
+      phone: string | number | null;
+      email: string | null;
+      purpose: string | undefined | null;
+   }) => void;
    isExists: (phone: string) => Promise<any>;
-   sendOTP: ({ login, isEmail, country_code }: {login: string, isEmail:boolean, country_code: string}) => Promise<any>;
-   validateOTP: ({ code, purpose }: {code: string, purpose:string}) => Promise<any>;
+   sendOTP: ({
+      login,
+      isEmail,
+      country_code,
+   }: {
+      login: string;
+      isEmail: boolean;
+      country_code: string;
+   }) => Promise<any>;
+   validateOTP: ({ code, purpose }: { code: string; purpose: string }) => Promise<any>;
+   fetchPermissions: () => Promise<void>;
    login: ({ login, purpose, code }: any) => Promise<any>;
    register: ({ name, username, phone, country_code, email }: any) => Promise<any>;
    logout: () => Promise<any>;
@@ -42,60 +66,75 @@ const useAuthStore = create<AuthState>()(
       (set, get) => ({
          authData: { userId: null, permissions: null, accessToken: null },
          user: null,
-         registData: {isEmail:false , phone: null, email: null, purpose: null},
+         registData: { isEmail: false, phone: null, email: null, purpose: null },
          isLoggedOut: false,
-         
+
          getUser: () => {
             set((state) => ({
-               user:
-                  state.user || get().authData.userId
-                     ? { id: get().authData.userId }
-                     : null,
+               user: state.user || get().authData.userId ? { id: get().authData.userId } : null,
             }));
          },
 
-         setRegist: ({isEmail, phone, email, purpose} : any) => {
-            set({ registData: {isEmail, phone, email, purpose} });
+         setRegist: ({ isEmail, phone, email, purpose }: any) => {
+            set({ registData: { isEmail, phone, email, purpose } });
          },
 
          sendOTP: async ({ login, isEmail, country_code }) => {
             try {
                const body = {
-                  login, is_email: isEmail, country_code
+                  login,
+                  is_email: isEmail,
+                  country_code,
                };
 
-               const res = await api.post(
-                  `/otp/request`, body
-               );
+               const res = await api.post(`/otp/request`, body);
 
                return res.data;
             } catch (err) {
-               console.error("Check exists error:", err);
+               console.error('Check exists error:', err);
                throw err;
             }
          },
 
          validateOTP: async ({ code, purpose }) => {
             try {
-               const res = await api.post(
-                  `/otp/validate`, { code, purpose }
-               );
+               const res = await api.post(`/otp/validate`, { code, purpose });
                return res.data;
             } catch (err) {
-               console.error("Check exists error:", err);
+               console.error('Check exists error:', err);
                throw err;
             }
          },
 
          isExists: async (phone) => {
             try {
-               const res = await api.get(
-                  `/auth/check-exists?phone=${phone}`
-               );
+               const res = await api.get(`/auth/check-exists?phone=${phone}`);
                return res.data;
             } catch (err) {
-               console.error("Check exists error:", err);
+               console.error('Check exists error:', err);
                throw err;
+            }
+         },
+
+         // ✅ Fetch permissions from API and cache in store
+         fetchPermissions: async () => {
+            try {
+               const res = await protectedApi.get(`/auth/permissions`);
+               set((state) => ({
+                  authData: {
+                     ...state.authData,
+                     permissions: res.data.data,
+                  },
+               }));
+            } catch (err) {
+               console.error('Fetch permissions error:', err);
+               // Set empty permissions on error
+               set((state) => ({
+                  authData: {
+                     ...state.authData,
+                     permissions: [],
+                  },
+               }));
             }
          },
 
@@ -107,6 +146,7 @@ const useAuthStore = create<AuthState>()(
                   purpose,
                });
 
+               // ✅ Set user data and permissions from response (backend still returns for initial load)
                set({
                   authData: {
                      userId: res.data.data.user?.id,
@@ -116,7 +156,7 @@ const useAuthStore = create<AuthState>()(
                   isLoggedOut: false,
                });
 
-               if (res.data.success){
+               if (res.data.success) {
                   set(() => ({
                      registData: undefined,
                   }));
@@ -124,7 +164,7 @@ const useAuthStore = create<AuthState>()(
 
                return res.data;
             } catch (err) {
-               console.error("Login error:", err);
+               console.error('Login error:', err);
                throw err;
             }
          },
@@ -140,7 +180,7 @@ const useAuthStore = create<AuthState>()(
                   isEmail: get().registData.isEmail,
                });
 
-               if (res.data.success){
+               if (res.data.success) {
                   set(() => ({
                      registData: undefined,
                   }));
@@ -148,7 +188,7 @@ const useAuthStore = create<AuthState>()(
 
                return res.data;
             } catch (err) {
-               console.error("Register error:", err);
+               console.error('Register error:', err);
                throw err;
             }
          },
@@ -159,8 +199,8 @@ const useAuthStore = create<AuthState>()(
 
                set({
                   authData: {
-                  userId: null,
-                  permissions: null,
+                     userId: null,
+                     permissions: null,
                   },
                   registData: undefined,
                   user: null,
@@ -169,7 +209,10 @@ const useAuthStore = create<AuthState>()(
 
                return res.data;
             } catch (err) {
-               console.warn("Logout gagal (server error), tapi local state sudah dibersihkan:", err);
+               console.warn(
+                  'Logout gagal (server error), tapi local state sudah dibersihkan:',
+                  err
+               );
 
                set({
                   authData: {
@@ -180,32 +223,33 @@ const useAuthStore = create<AuthState>()(
                   user: null,
                   isLoggedOut: true,
                });
-               const msg = "Logout failed, forced local logout"
+               const msg = 'Logout failed, forced local logout';
                return { success: false, error: msg, message: msg };
             }
          },
 
          refreshToken: async () => {
             try {
-               const res = await protectedApi.post(
-                  `/auth/refresh`,
-                  null,
-                  { withCredentials: true }
-               );
-               const { accessToken } = res.data;
+               const res = await protectedApi.post(`/auth/refresh`, null, {
+                  withCredentials: true,
+               });
 
+               // ✅ Update permissions from refresh response (backend still returns for convenience)
                set((state) => ({
-                  authData: { ...state.authData, accessToken },
+                  authData: {
+                     ...state.authData,
+                     permissions: res.data.data?.permissions || state.authData.permissions,
+                  },
                   isLoggedOut: false,
                }));
             } catch (err) {
-               console.error("Token refresh failed:", err);
+               console.error('Token refresh failed:', err);
                get().logout();
             }
          },
       }),
       {
-         name: "auth-store", // key di localStorage
+         name: 'auth-store', // key di localStorage
          partialize: (state) => ({
             authData: state.authData,
             user: state.user,

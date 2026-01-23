@@ -46,11 +46,11 @@ export const themeConfig: ThemeConfig = {
     *************************************** */
    palette: {
       primary: {
-         lighter: '#C8FAD6',
-         light: '#5BE49B',
-         main: '#00A76F',
-         dark: '#007867',
-         darker: '#004B50',
+         lighter: '#c5e3ff',
+         light: '#267bca',
+         main: '#0069cb',
+         dark: '#0f4d86',
+         darker: '#000547',
          contrastText: '#FFFFFF',
       },
       secondary: {
@@ -102,11 +102,11 @@ export const themeConfig: ThemeConfig = {
          500: '#919EAB',
          600: '#637381',
          700: '#454F5B',
-         800: '#1C252E',
-         900: '#141A21',
+         800: '#0f263a',
+         900: '#0c2030',
       },
       common: {
-         black: '#000000',
+         black: '#003768',
          white: '#FFFFFF',
       },
    },

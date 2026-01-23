@@ -148,7 +148,10 @@ export function AttendanceForm({ type }: Props) {
             toast.error(res.message || 'Gagal mengirim absensi');
          }
       } catch (error: any) {
-         toast.error(error.message || 'Terjadi kesalahan');
+         // Extract user-friendly message from API response
+         const errorMessage =
+            error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
+         toast.error(errorMessage);
       } finally {
          setLoading(false);
       }

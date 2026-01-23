@@ -37,7 +37,7 @@ export type ConfigValue = {
 // ----------------------------------------------------------------------
 
 export const CONFIG: ConfigValue = {
-   appName: 'EMA - Admin',
+   appName: 'Masoq.id - Attendance App with Smart Suspicious Detection',
    apiHost: 'localhost',
    apiPort: '1263',
    apiHostUrl: process.env.NEXT_PUBLIC_API_HOST ?? '',
