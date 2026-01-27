@@ -36,10 +36,10 @@ export default function SignUpView() {
    const router = useRouter();
    const { registData, setRegist, register: daftar } = useAuthStore();
    let phoneNumberStr = registData?.phone
-         ? String(registData.phone).startsWith('+')
-            ? String(registData.phone)
-            : `+${registData.phone}`
-         : '';
+      ? String(registData.phone).startsWith('+')
+         ? String(registData.phone)
+         : `+${registData.phone}`
+      : '';
    phoneNumberStr = phoneNumberStr.replace(/\s/g, '');
    const defaultValues: SignUpType = {
       name: '',
@@ -70,7 +70,7 @@ export default function SignUpView() {
             username: data.username,
             phone: data.phoneNumber,
             country_code: data.phoneNumber_country_code,
-            email: data.email,
+            email: data.email?.toLowerCase(),
          });
          if (reg.success) {
             toast.success('Register Successfully!.. now you can login with your account');
