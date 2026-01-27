@@ -97,7 +97,7 @@ func (s *AuthService) Login(login, code, purpose string) (string, string, models
 	var user models.User
 
 	if err := s.DB.Preload("Role").
-		Where("username = ? OR phone = ? OR email = ?", login, otp.Phone, login).
+		Where("username = ? OR phone = ? OR LOWER(email) = LOWER(?)", login, otp.Phone, login).
 		First(&user).Error; err != nil {
 		return "", "", models.User{}, nil, errors.New("user tidak ditemukan")
 	}
@@ -141,6 +141,7 @@ func (s *AuthService) Register(phone, countryCode, name, username, email string,
 	}
 
 	if isEmail {
+		email = strings.ToLower(email)
 		lookupField = "email = ?"
 		lookupValue = email
 	}
@@ -427,7 +428,7 @@ func (s *AuthService) RefreshToken(c *fiber.Ctx) (fiber.Map, error) {
 // Check Registered User
 func (s *AuthService) CheckRegistered(phone string, email string) (models.User, error) {
 	var user models.User
-	if err := s.DB.First(&user, "phone = ? OR email = ?", phone, email).Error; err != nil {
+	if err := s.DB.First(&user, "phone = ? OR LOWER(email) = LOWER(?)", phone, email).Error; err != nil {
 		return models.User{}, nil
 	}
 	return user, nil
