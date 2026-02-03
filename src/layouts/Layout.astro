@@ -7,6 +7,7 @@ interface Props {
 
 const { title, description, ogImage = "/og-image.jpg" } = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+import "../styles/global.css";
 import TranslationManager from "../components/TranslationManager.astro";
 ---
 
@@ -97,7 +98,6 @@ import TranslationManager from "../components/TranslationManager.astro";
          document.documentElement.classList.add("light");
       </script>
 
-      <link rel="stylesheet" href="/src/styles/global.css" />
    </head>
    <body class="bg-background-light text-text-main overflow-x-hidden">
       <slot />
