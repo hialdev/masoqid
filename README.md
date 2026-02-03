@@ -1,43 +1,100 @@
-# Astro Starter Kit: Minimal
+# MASOQ.id Landing Page
 
-```sh
-npm create astro@latest -- --template minimal
+Landing page modern dan SEO-friendly untuk MASOQ.id - Solusi Validasi Kehadiran Cerdas & Anti-Fraud.
+
+## 🚀 Quick Start
+
+### Development
+
+```bash
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Server akan berjalan di `http://localhost:4321/`
 
-## 🚀 Project Structure
+### Build Production
 
-Inside of your Astro project, you'll see the following folders and files:
+```bash
+npm run build
+```
 
-```text
+Output akan tersimpan di folder `dist/`
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## 📁 Struktur Proyek
+
+```
 /
 ├── public/
+│   └── robots.txt              # SEO robots configuration
 ├── src/
-│   └── pages/
-│       └── index.astro
+│   ├── components/
+│   │   ├── Navigation.astro    # Sticky navigation
+│   │   ├── Hero.astro          # Hero section
+│   │   ├── Comparison.astro    # Comparison section
+│   │   ├── Features.astro      # Features grid
+│   │   ├── Advantages.astro    # Advantages section
+│   │   ├── Pricing.astro       # Pricing card
+│   │   └── Footer.astro        # Footer
+│   ├── layouts/
+│   │   └── Layout.astro        # Main layout with SEO
+│   ├── pages/
+│   │   └── index.astro         # Landing page
+│   └── styles/
+│       └── global.css          # Global styles
+├── astro.config.mjs            # Astro configuration
+├── tailwind.config.mjs         # Tailwind theme
 └── package.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## ✨ Fitur
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+- ✅ **SEO-Friendly**: Meta tags lengkap, Open Graph, Structured Data, Sitemap
+- ✅ **Responsive**: Mobile-first design dengan Tailwind CSS
+- ✅ **Dark Mode**: Support untuk light/dark theme
+- ✅ **Performance**: Static site generation untuk kecepatan optimal
+- ✅ **Modern UI**: Glassmorphism, hover effects, smooth scrolling
+- ✅ **Accessibility**: Semantic HTML, proper heading hierarchy
 
-Any static assets, like images, can be placed in the `public/` directory.
+## 🎨 Design System
 
-## 🧞 Commands
+### Colors
 
-All commands are run from the root of the project, from a terminal:
+- Primary: `#195de6`
+- Primary Dark: `#1045b3`
+- Background Light: `#ffffff`
+- Background Subtle: `#f8f9fc`
+- Background Dark: `#111621`
+- Text Main: `#0e121b`
+- Text Muted: `#4e6797`
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Typography
 
-## 👀 Want to learn more?
+- Font Family: Manrope (400, 500, 600, 700, 800)
+- Icons: Material Symbols Outlined
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## 🛠️ Tech Stack
+
+- [Astro](https://astro.build/) - Static Site Generator
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Google Fonts](https://fonts.google.com/) - Manrope font
+- [Material Symbols](https://fonts.google.com/icons) - Icon library
+
+## 📦 Deployment
+
+Build folder `dist/` dapat di-deploy ke:
+
+- Vercel
+- Netlify
+- Cloudflare Pages
+- GitHub Pages
+- Atau hosting static lainnya
+
+## 📄 License
+
+© 2026 MASOQ.id. All rights reserved.

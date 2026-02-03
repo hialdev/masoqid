@@ -1,0 +1,106 @@
+---
+import { translations } from "../i18n/translations";
+
+const conventionalItems = translations.id.comparison.conventional_items;
+const masoqItems = translations.id.comparison.masoq_items;
+---
+
+<section class="py-24 bg-white" id="comparison">
+   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+         <h2
+            class="text-3xl font-bold tracking-tight text-text-main sm:text-4xl"
+            data-i18n="comparison.title"
+         >
+            Kelemahan Konvensional vs Solusi Masoq
+         </h2>
+         <p
+            class="mt-4 text-lg text-text-muted"
+            data-i18n="comparison.subtitle"
+         >
+            Mengapa metode lama gagal dan bagaimana kami memperbaikinya.
+         </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+         <!-- Conventional Problems -->
+         <div
+            class="group relative overflow-hidden rounded-2xl border border-red-100 bg-red-50/50 p-8"
+         >
+            <div
+               class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-red-100 blur-xl"
+            >
+            </div>
+            <div class="relative">
+               <div
+                  class="mb-4 inline-flex items-center justify-center rounded-lg bg-red-100 p-3 text-red-600"
+               >
+                  <span class="material-symbols-outlined text-3xl">warning</span
+                  >
+               </div>
+               <h3
+                  class="text-xl font-bold text-gray-900"
+                  data-i18n="comparison.conv_title"
+               >
+                  Absensi Konvensional
+               </h3>
+               <ul class="mt-4 space-y-3 text-gray-600">
+                  {
+                     conventionalItems.map((item, index) => (
+                        <li class="flex items-start gap-3">
+                           <span class="material-symbols-outlined text-red-500 shrink-0">
+                              close
+                           </span>
+                           <span
+                              data-i18n={`comparison.conventional_items.${index}`}
+                           >
+                              {item}
+                           </span>
+                        </li>
+                     ))
+                  }
+               </ul>
+            </div>
+         </div>
+
+         <!-- Masoq Solution -->
+         <div
+            class="group relative overflow-hidden rounded-2xl border border-primary/20 bg-blue-50/50 p-8 shadow-lg ring-1 ring-primary/5"
+         >
+            <div
+               class="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-blue-100 blur-xl"
+            >
+            </div>
+            <div class="relative">
+               <div
+                  class="mb-4 inline-flex items-center justify-center rounded-lg bg-blue-600/10 p-3 text-blue-600"
+               >
+                  <span class="material-symbols-outlined text-3xl"
+                     >verified_user</span
+                  >
+               </div>
+               <h3
+                  class="text-xl font-bold text-gray-900"
+                  data-i18n="comparison.masoq_title"
+               >
+                  Validasi Cerdas Masoq
+               </h3>
+               <ul class="mt-4 space-y-3 text-gray-600">
+                  {
+                     masoqItems.map((item, index) => (
+                        <li class="flex items-start gap-3">
+                           <span class="material-symbols-outlined text-primary shrink-0">
+                              check_circle
+                           </span>
+                           <span data-i18n={`comparison.masoq_items.${index}`}>
+                              {item}
+                           </span>
+                        </li>
+                     ))
+                  }
+               </ul>
+            </div>
+         </div>
+      </div>
+   </div>
+</section>

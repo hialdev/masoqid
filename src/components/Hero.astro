@@ -1,0 +1,63 @@
+---
+import WhatsAppButton from "./WhatsAppButton.astro";
+---
+
+<section
+   class="relative overflow-hidden bg-blue-50 pt-16 pb-24 lg:pt-32 lg:pb-40"
+>
+   <div
+      class="absolute inset-0 z-0 opacity-10 pointer-events-none"
+      data-alt="Abstract dot grid pattern background"
+      style="background-image: radial-gradient(#195de6 1px, transparent 1px); background-size: 32px 32px;"
+   >
+   </div>
+
+   <div
+      class="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8"
+   >
+      <div class="mx-auto max-w-4xl">
+         <span
+            class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-gray-900 ring-1 ring-inset ring-primary/20 mb-6"
+            data-i18n="hero.pill"
+         >
+            Solusi Absensi Modern
+         </span>
+
+         <h1
+            class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl mb-6 leading-tight"
+         >
+            <span data-i18n="hero.title1">Masoq.id: Validasi Kehadiran</span>
+            <br class="hidden sm:block" />
+            <span class="text-gray-900" data-i18n="hero.title2"
+               >Cerdas & Anti-Fraud</span
+            >
+         </h1>
+
+         <p
+            class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600"
+            data-i18n="hero.desc"
+         >
+            Solusi absensi digital aman dengan validasi cerdas untuk mengatasi
+            tantangan kerja hybrid, GPS spoofing, dan manipulasi data kehadiran.
+         </p>
+
+         <div class="mt-10 flex items-center justify-center gap-x-6">
+            <WhatsAppButton
+               text="Mulai Sekarang"
+               i18nKey="hero.cta"
+               className="h-12 px-8 text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            />
+            <a
+               class="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-900 flex items-center gap-1 group"
+               href="#features"
+            >
+               <span data-i18n="hero.learn">Pelajari Lebih Lanjut</span>
+               <span
+                  class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform"
+                  >arrow_forward</span
+               >
+            </a>
+         </div>
+      </div>
+   </div>
+</section>

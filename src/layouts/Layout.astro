@@ -1,0 +1,106 @@
+---
+interface Props {
+   title: string;
+   description: string;
+   ogImage?: string;
+}
+
+const { title, description, ogImage = "/og-image.jpg" } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+import TranslationManager from "../components/TranslationManager.astro";
+---
+
+<!doctype html>
+<html lang="id" class="light">
+   <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+      <link rel="canonical" href={canonicalURL} />
+      <meta name="generator" content={Astro.generator} />
+
+      <!-- Primary Meta Tags -->
+      <title>{title}</title>
+      <meta name="title" content={title} />
+      <meta name="description" content={description} />
+
+      <!-- Open Graph / Facebook -->
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalURL} />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+
+      <!-- Twitter -->
+      <meta property="twitter:card" content="summary_large_image" />
+      <meta property="twitter:url" content={canonicalURL} />
+      <meta property="twitter:title" content={title} />
+      <meta property="twitter:description" content={description} />
+      <meta property="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+      <!-- Fonts -->
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+         rel="stylesheet"
+      />
+      <link
+         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+         rel="stylesheet"
+      />
+
+      <!-- Structured Data -->
+      <script type="application/ld+json">
+         {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "MASOQ.id",
+            "description": "Solusi absensi digital aman dengan validasi cerdas untuk mengatasi tantangan kerja hybrid, GPS spoofing, dan manipulasi data kehadiran",
+            "url": "https://masoq.id",
+            "logo": "https://masoq.id/logo.png",
+            "contactPoint": {
+               "@type": "ContactPoint",
+               "telephone": "+62-811-1892-842",
+               "contactType": "Customer Service",
+               "email": "hello@masoq.id",
+               "areaServed": "ID",
+               "availableLanguage": ["Indonesian", "English"]
+            },
+            "sameAs": [
+               "https://www.linkedin.com/company/masoq",
+               "https://www.instagram.com/masoq.id"
+            ]
+         }
+      </script>
+
+      <style>
+         body {
+            font-family: "Manrope", sans-serif;
+         }
+         .material-symbols-outlined {
+            font-variation-settings:
+               "FILL" 0,
+               "wght" 400,
+               "GRAD" 0,
+               "opsz" 24;
+         }
+         html {
+            scroll-behavior: smooth;
+         }
+      </style>
+
+      <script is:inline>
+         // Force light mode
+         localStorage.removeItem("theme");
+         document.documentElement.classList.remove("dark");
+         document.documentElement.classList.add("light");
+      </script>
+
+      <link rel="stylesheet" href="/src/styles/global.css" />
+   </head>
+   <body class="bg-background-light text-text-main overflow-x-hidden">
+      <slot />
+      <TranslationManager />
+   </body>
+</html>

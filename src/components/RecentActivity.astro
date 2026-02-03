@@ -1,0 +1,155 @@
+---
+
+---
+
+<div
+   id="recent-activity"
+   class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-none hidden"
+>
+   <div
+      id="recent-activity-card"
+      class="bg-white/95 backdrop-blur-sm border border-blue-100 shadow-xl rounded-full px-5 py-3 flex items-center gap-4 transform transition-all duration-500 ease-out origin-bottom translate-y-8 opacity-0 scale-90"
+   >
+      <div class="flex -space-x-3">
+         <div
+            class="h-8 w-8 rounded-full ring-2 ring-white bg-blue-100 flex items-center justify-center overflow-hidden"
+         >
+            <span class="material-symbols-outlined text-blue-600 text-[18px]"
+               >person</span
+            >
+         </div>
+         <div
+            class="h-8 w-8 rounded-full ring-2 ring-white bg-green-100 flex items-center justify-center overflow-hidden"
+         >
+            <span class="material-symbols-outlined text-green-600 text-[16px]"
+               >check</span
+            >
+         </div>
+      </div>
+
+      <div class="flex flex-col">
+         <p class="text-xs text-gray-900 font-medium whitespace-nowrap">
+            <span id="ra-count" class="font-bold">2</span>
+            <span id="ra-text">orang memilih</span>
+            <span id="ra-plan" class="font-bold text-blue-600"
+               >Paket Standard</span
+            >
+         </p>
+         <p class="text-[10px] text-gray-500" id="ra-time">2 detik lalu</p>
+      </div>
+   </div>
+</div>
+
+<script>
+   const container = document.getElementById("recent-activity");
+   const card = document.getElementById("recent-activity-card");
+   const countEl = document.getElementById("ra-count");
+   const textEl = document.getElementById("ra-text");
+   const planEl = document.getElementById("ra-plan");
+   const timeEl = document.getElementById("ra-time");
+
+   const translations = {
+      id: {
+         text: "orang memilih",
+         plan: "Paket Standard",
+         sec: "detik lalu",
+         min: "menit lalu",
+      },
+      en: {
+         text: "people chose",
+         plan: "Standard Plan",
+         sec: "seconds ago",
+         min: "minutes ago",
+      },
+      cn: {
+         text: "人选择了",
+         plan: "标准计划",
+         sec: "秒前",
+         min: "分钟前",
+      },
+   };
+
+   let currentLang = "id";
+
+   // Try to get initial lang
+   if (typeof window !== "undefined") {
+      currentLang =
+         document.documentElement.lang ||
+         localStorage.getItem("language") ||
+         "id";
+
+      window.addEventListener("language-change", (e: any) => {
+         currentLang = e.detail;
+         // Note: We don't update currently shown popup instantly to avoid glitch,
+         // logic will define text on next popup show.
+         // Or we strictly rely on showPopup logic.
+      });
+   }
+
+   function getRandomInt(min: any, max: any) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+   }
+
+   function showPopup() {
+      if (!container || !card || !countEl || !timeEl || !textEl || !planEl)
+         return;
+
+      // Generate random data
+      const isSeconds = Math.random() > 0.5;
+      let count, timeText;
+
+      // Get Translation
+      // @ts-ignore
+      const t = translations[currentLang] || translations.id;
+
+      if (isSeconds) {
+         count = getRandomInt(1, 3);
+         const seconds = getRandomInt(1, 30);
+         timeText = `${seconds} ${t.sec}`;
+      } else {
+         count = getRandomInt(2, 7);
+         const minutes = getRandomInt(1, 5);
+         timeText = `${minutes} ${t.min}`;
+      }
+
+      // Update Text
+      countEl.innerText = count.toString();
+      textEl.innerText = t.text;
+      planEl.innerText = t.plan;
+      timeEl.innerText = timeText;
+
+      // Show Container
+      container.classList.remove("hidden");
+
+      // Animate In
+      requestAnimationFrame(() => {
+         card.classList.remove("translate-y-8", "opacity-0", "scale-90");
+         card.classList.add("translate-y-0", "opacity-100", "scale-100");
+      });
+
+      // Hide after 4 seconds
+      setTimeout(hidePopup, 4000);
+   }
+
+   function hidePopup() {
+      if (!container || !card) return;
+
+      // Animate Out
+      card.classList.remove("translate-y-0", "opacity-100", "scale-100");
+      card.classList.add("opacity-0");
+
+      setTimeout(() => {
+         card.classList.add("translate-y-8", "scale-90");
+         container.classList.add("hidden");
+
+         scheduleNext();
+      }, 500);
+   }
+
+   function scheduleNext() {
+      const delay = getRandomInt(2000, 6000);
+      setTimeout(showPopup, delay);
+   }
+
+   scheduleNext();
+</script>

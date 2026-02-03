@@ -1,0 +1,75 @@
+---
+import { translations } from "../i18n/translations";
+---
+
+<script is:inline define:vars={{ translations }}>
+   window.I18N_DATA = translations;
+
+   function updateTexts(lang) {
+      if (!window.I18N_DATA[lang]) return;
+
+      const elements = document.querySelectorAll("[data-i18n]");
+      elements.forEach((el) => {
+         const key = el.getAttribute("data-i18n");
+         if (!key) return;
+
+         const keys = key.split(".");
+         let value = window.I18N_DATA[lang];
+
+         // Traverse object
+         for (const k of keys) {
+            if (value && value[k]) {
+               value = value[k];
+            } else {
+               value = null;
+               break;
+            }
+         }
+
+         if (value) {
+            el.textContent = value;
+         }
+      });
+
+      document.documentElement.lang = lang;
+   }
+
+   // Listen to custom event from Zustand store
+   window.addEventListener("language-change", (e) => {
+      updateTexts(e.detail);
+   });
+
+   // Initial load from localStorage (Zustand persist format)
+   // Format: {"state":{"language":"en"},"version":0}
+   const stored = localStorage.getItem("language-storage");
+   let initialLang = "en";
+
+   if (stored) {
+      try {
+         const parsed = JSON.parse(stored);
+         if (parsed.state && parsed.state.language) {
+            initialLang = parsed.state.language;
+         }
+      } catch (e) {
+         console.error("Failed to parse language storage", e);
+      }
+   } else {
+      // Auto-detect from browser
+      const browserLang = navigator.language || navigator.userLanguage;
+      if (browserLang) {
+         if (browserLang.toLowerCase().includes("en")) {
+            initialLang = "en";
+         } else if (
+            browserLang.toLowerCase().includes("cn") ||
+            browserLang.toLowerCase().includes("zh")
+         ) {
+            initialLang = "cn";
+         } else {
+            initialLang = "en";
+         }
+      }
+   }
+
+   // Apply immediately
+   updateTexts(initialLang);
+</script>

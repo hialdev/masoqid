@@ -1,0 +1,50 @@
+---
+import { translations } from "../i18n/translations";
+
+const items = translations.id.advantages.items;
+---
+
+<section class="py-24 bg-white" id="advantages">
+   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="mb-12 text-center">
+         <h2
+            class="text-3xl font-bold tracking-tight text-text-main sm:text-4xl"
+            data-i18n="advantages.title"
+         >
+            Keunggulan Utama
+         </h2>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-8">
+         {
+            items.map((item, index) => (
+               <div class="flex-none w-[45%] md:w-[30%] lg:w-[18%] flex flex-col items-center text-center">
+                  <div
+                     class:list={[
+                        "flex size-16 items-center justify-center rounded-full mb-4",
+                        item.bg,
+                        item.text,
+                     ]}
+                  >
+                     <span class="material-symbols-outlined text-3xl">
+                        {item.icon}
+                     </span>
+                  </div>
+                  <h3
+                     class="text-lg font-bold text-text-main"
+                     data-i18n={`advantages.items.${index}.title`}
+                  >
+                     {item.title}
+                  </h3>
+                  <p
+                     class="mt-1 text-sm text-text-muted"
+                     data-i18n={`advantages.items.${index}.desc`}
+                  >
+                     {item.desc}
+                  </p>
+               </div>
+            ))
+         }
+      </div>
+   </div>
+</section>

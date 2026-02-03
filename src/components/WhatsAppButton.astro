@@ -1,0 +1,78 @@
+---
+interface Props {
+   text?: string;
+   icon?: string;
+   className?: string;
+   variant?: "primary" | "secondary" | "full";
+   i18nKey?: string;
+}
+
+const {
+   text,
+   icon,
+   className = "",
+   variant = "primary",
+   i18nKey,
+} = Astro.props;
+
+// Base styles matching the previous design
+const baseStyles =
+   "inline-flex items-center justify-center gap-2 rounded-lg transition-colors font-bold cursor-pointer";
+
+// Variants
+const variants = {
+   primary:
+      "bg-blue-600 hover:bg-blue-700 text-white shadow-md py-2 px-6 text-sm",
+   secondary:
+      "bg-white text-gray-900 border border-gray-200 hover:border-blue-300 hover:text-blue-600 py-2 px-4 text-sm",
+   full: "w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md py-3 px-4",
+};
+
+const selectedVariant = variants[variant];
+---
+
+<button class:list={[baseStyles, selectedVariant, className]} data-whatsapp-btn>
+   {icon && <span class="material-symbols-outlined">{icon}</span>}
+   {text && <span data-i18n={i18nKey}>{text}</span>}
+</button>
+
+<script>
+   // Message dictionary
+   const messages: any = {
+      id: "Hallo, Masoq.id... Saya tertarik untuk berlangganan sistem absensi pintar dengan 10.000 rupiah /karyawan/bulan",
+      en: "Hello, Masoq.id... I am interested in subscribing to the smart attendance system for 10,000 rupiah /employee/month",
+      cn: "你好，Masoq.id... 我有兴趣订阅智能考勤系统，每位员工每月 10,000 印尼盾",
+   };
+
+   const phoneNumber = "628111892842";
+
+   function setupButtons() {
+      const buttons = document.querySelectorAll("[data-whatsapp-btn]");
+
+      buttons.forEach((btn) => {
+         btn.addEventListener("click", () => {
+            // Detect language from html tag or localStorage, default to 'id'
+            // Since the user might implement language switching later, we check common sources
+            let lang =
+               document.documentElement.lang ||
+               localStorage.getItem("language") ||
+               "id";
+
+            // Simple mapping if lang is like 'id-ID' or 'en-US'
+            if (lang.startsWith("en")) lang = "en";
+            else if (lang.startsWith("zh") || lang.startsWith("cn"))
+               lang = "cn";
+            else lang = "id";
+
+            const message = messages[lang] || messages.id;
+            const encodedMessage = encodeURIComponent(message);
+            const url = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+            window.open(url, "_blank");
+         });
+      });
+   }
+
+   // Run on load
+   setupButtons();
+</script>
