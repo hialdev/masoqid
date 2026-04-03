@@ -130,6 +130,66 @@ func main() {
 			}
 		}
 
+		// 5. Helper: cari permission by name dari allPermissions
+		findPerms := func(names []string) []authModels.Permission {
+			var result []authModels.Permission
+			for _, name := range names {
+				for _, p := range allPermissions {
+					if p.Name == name {
+						result = append(result, p)
+						break
+					}
+				}
+			}
+			return result
+		}
+
+		// 6. Role Manager
+		managerPermissions := []string{
+			"Read User", "Update User", "Assign User", "Assign Office",
+			"Read Office", "Import Office",
+			"Read Shift", "Add Shift", "Update Shift", "Delete Shift",
+			"Read Salary", "Update User Salary",
+			"Read Attendance",
+			"Read Setting",
+			"Read ExampleRich",
+		}
+
+		var managerRole authModels.Role
+		if err := tx.Where("name = ?", "Manager").First(&managerRole).Error; err != nil {
+			managerRole = authModels.Role{
+				Name:        "Manager",
+				Description: strPtr("Akses manajemen karyawan, shift, dan laporan"),
+			}
+			if err := tx.Create(&managerRole).Error; err != nil {
+				return fmt.Errorf("gagal membuat role Manager: %v", err)
+			}
+			fmt.Println("\n✅ Role 'Manager' berhasil dibuat")
+		} else {
+			fmt.Println("\nℹ️ Role 'Manager' sudah ada")
+		}
+		if err := tx.Model(&managerRole).Association("Permissions").Replace(findPerms(managerPermissions)); err != nil {
+			return fmt.Errorf("gagal assign permission ke Manager: %v", err)
+		}
+		fmt.Printf("✅ %d permission di-assign ke role 'Manager'\n", len(managerPermissions))
+
+		// 7. Role Karyawan (tidak ada permission ACL — akses via JWT-only endpoints)
+		var karyawanRole authModels.Role
+		if err := tx.Where("name = ?", "Karyawan").First(&karyawanRole).Error; err != nil {
+			karyawanRole = authModels.Role{
+				Name:        "Karyawan",
+				Description: strPtr("Akses terbatas: lihat shift sendiri dan absensi sendiri"),
+			}
+			if err := tx.Create(&karyawanRole).Error; err != nil {
+				return fmt.Errorf("gagal membuat role Karyawan: %v", err)
+			}
+			fmt.Println("\n✅ Role 'Karyawan' berhasil dibuat")
+		} else {
+			fmt.Println("\nℹ️ Role 'Karyawan' sudah ada")
+		}
+		// Karyawan tidak perlu permission ACL — my-shifts, my-attendance, profile cukup JWT
+		fmt.Println("ℹ️ Role 'Karyawan' tidak memiliki permission ACL (akses via JWT-only endpoints)")
+
 		return nil
 	})
 

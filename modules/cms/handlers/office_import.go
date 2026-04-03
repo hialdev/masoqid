@@ -22,7 +22,8 @@ type ImportEmployeeRow struct {
 	Email       string
 	Phone       string
 	CountryCode string
-	RoleID      string
+	RoleID      string // UUID — backward compat
+	RoleName    string // Nama role, misal "Karyawan" / "Manager"
 	Error       string
 }
 
@@ -135,6 +136,7 @@ func parseCSV(file io.Reader) ([]ImportEmployeeRow, error) {
 			Phone:       getColumn(record, columnMap, "phone"),
 			CountryCode: getColumn(record, columnMap, "country_code"),
 			RoleID:      getColumn(record, columnMap, "role_id"),
+			RoleName:    getColumn(record, columnMap, "role_name"),
 		}
 
 		// Set default country code
@@ -196,6 +198,7 @@ func parseExcel(file io.Reader) ([]ImportEmployeeRow, error) {
 			Phone:       getColumn(record, columnMap, "phone"),
 			CountryCode: getColumn(record, columnMap, "country_code"),
 			RoleID:      getColumn(record, columnMap, "role_id"),
+			RoleName:    getColumn(record, columnMap, "role_name"),
 		}
 
 		// Set default country code
@@ -253,17 +256,41 @@ func processImport(db *gorm.DB, rows []ImportEmployeeRow, officeID uuid.UUID, st
 			continue
 		}
 
-		// Parse role ID if provided
+		// Tentukan role untuk user — tiga jalur prioritas:
 		var roleID *uuid.UUID
+
+		// Prioritas 1: role_id (UUID) dari file — backward compat
 		if row.RoleID != "" {
 			parsedRoleID, err := uuid.Parse(row.RoleID)
 			if err != nil {
-				row.Error = "Role ID tidak valid"
+				row.Error = "Role ID tidak valid (harus format UUID)"
 				result.Errors = append(result.Errors, row)
 				result.Failed++
 				continue
 			}
 			roleID = &parsedRoleID
+		}
+
+		// Prioritas 2: role_name dari file — lookup by name di DB
+		if roleID == nil && row.RoleName != "" {
+			var namedRole models.Role
+			if err := db.Where("LOWER(name) = LOWER(?)", row.RoleName).First(&namedRole).Error; err == nil {
+				roleID = &namedRole.ID
+			} else {
+				row.Error = fmt.Sprintf("Role '%s' tidak ditemukan di database", row.RoleName)
+				result.Errors = append(result.Errors, row)
+				result.Failed++
+				continue
+			}
+		}
+
+		// Prioritas 3: default role Karyawan jika keduanya kosong
+		if roleID == nil {
+			var defaultRole models.Role
+			if err := db.Where("name = ?", "Karyawan").First(&defaultRole).Error; err == nil {
+				roleID = &defaultRole.ID
+			}
+			// Jika Karyawan belum ada di DB, roleID tetap nil (user dibuat tanpa role)
 		}
 
 		// Check Duplication (Username, Email, Phone)

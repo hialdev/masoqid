@@ -66,4 +66,32 @@ func SetupCMSRoutes(app *fiber.App, db *gorm.DB) {
 	office.Use(middlewares.DoACL("Assign Office")).Post("/:id/assign-users", officeHandler.AssignUsers)
 	office.Use(middlewares.DoACL("Import Office")).Post("/:id/import-employees", officeHandler.ImportEmployees) // NEW
 	office.Use(middlewares.DoACL("Read Office")).Get("/:id/users", officeHandler.GetOfficeUsers)
+
+	// ✅ Shift Management Routes
+	shiftHandler := handlers.NewShiftHandler(db)
+	shiftGroup := api.Group("/shifts")
+	shiftGroup.Use(middlewares.JWTProtected())
+	shiftGroup.Use(middlewares.DoACL("Read Shift")).Get("/", shiftHandler.GetMonthlySchedule)
+	shiftGroup.Use(middlewares.DoACL("Read Shift")).Get("/all", shiftHandler.GetAllShifts)
+	shiftGroup.Use(middlewares.DoACL("Add Shift")).Post("/", shiftHandler.CreateShift)
+	// switch harus sebelum /:id agar tidak konflik
+	shiftGroup.Use(middlewares.DoACL("Update Shift")).Post("/switch", shiftHandler.SwitchShifts)
+	shiftGroup.Use(middlewares.DoACL("Read Shift")).Get("/:id", shiftHandler.GetShiftByID)
+	shiftGroup.Use(middlewares.DoACL("Update Shift")).Patch("/:id", shiftHandler.UpdateShift)
+	shiftGroup.Use(middlewares.DoACL("Delete Shift")).Delete("/:id", shiftHandler.DeleteShift)
+
+	// My Shifts (karyawan lihat shift sendiri — hanya JWT, tanpa ACL)
+	api.Get("/my-shifts", middlewares.JWTProtected(), shiftHandler.GetMyShifts)
+
+	// ✅ Salary Routes
+	salaryHandler := handlers.NewSalaryHandler(db)
+	api.Post("/users/:id/salary",
+		middlewares.JWTProtected(),
+		middlewares.DoACL("Update User Salary"),
+		salaryHandler.UpdateUserSalary,
+	)
+	salaryGroup := api.Group("/salary")
+	salaryGroup.Use(middlewares.JWTProtected())
+	salaryGroup.Use(middlewares.DoACL("Read Salary")).Get("/report", salaryHandler.GetSalaryReport)
+	salaryGroup.Use(middlewares.DoACL("Read Salary")).Get("/report/export", salaryHandler.ExportSalaryReport)
 }

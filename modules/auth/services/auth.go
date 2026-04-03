@@ -99,7 +99,7 @@ func (s *AuthService) Login(login, code, purpose string) (string, string, models
 	if err := s.DB.Preload("Role").
 		Where("username = ? OR phone = ? OR LOWER(email) = LOWER(?)", login, otp.Phone, login).
 		First(&user).Error; err != nil {
-		return "", "", models.User{}, nil, errors.New("user tidak ditemukan")
+		return "", "", models.User{}, nil, errors.New("akun tidak terdaftar. Silakan hubungi Admin atau Manager untuk mendaftarkan akun Anda")
 	}
 
 	permissions, err := s.GetUserPermissions(user.ID.String())

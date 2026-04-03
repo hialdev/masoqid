@@ -82,6 +82,12 @@ func (h *OtpHandler) SendOTP(c *fiber.Ctx) error {
 	}
 
 	if err := h.DB.First(&usr, lookupField, lookupValue).Error; err != nil {
+		// User tidak ditemukan — cek apakah auto-registrasi diizinkan
+		autoRegist := strings.ToLower(os.Getenv("LOGIN_AUTO_REGIST")) == "true"
+		if !autoRegist {
+			return utils.RespApi(c, "bad",
+				"Tidak ada akun yang ditemukan. Silakan hubungi Admin atau Manager untuk mendaftarkan akun Anda.", nil)
+		}
 		purpose = "register"
 	} else if usr.Username != nil && *usr.Username != "" {
 		purpose = "login"

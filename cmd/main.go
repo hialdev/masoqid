@@ -63,6 +63,7 @@ func main() {
 		&CMSModels.ExampleRich{},
 		&CMSModels.Attendance{},
 		&CMSModels.AttendanceSuspiciousLog{},
+		&CMSModels.Shift{},
 
 		// User last because it has FK to Office
 		&models.User{},
