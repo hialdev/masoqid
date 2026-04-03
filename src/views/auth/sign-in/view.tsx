@@ -130,8 +130,12 @@ export default function SignInView() {
          } else {
             toast.error(send.message);
          }
-      } catch (error) {
-         console.error(error);
+      } catch (error: any) {
+         const msg =
+            error?.response?.data?.message ||
+            error?.message ||
+            'Terjadi kesalahan, silakan coba lagi.';
+         toast.error(msg);
       }
    });
 
@@ -187,7 +191,7 @@ export default function SignInView() {
             </Button>
          </Stack>
          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Jika tidak ada akun, tetaplah sign in dan akunmu akan otomatis terbuat.
+            Jika tidak memiliki akun, silakan hubungi Admin atau Manager.
          </Typography>
       </Form>
    );

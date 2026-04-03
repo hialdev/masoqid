@@ -64,6 +64,29 @@ export const navData: NavSectionProps['data'] = [
          },
       ],
    },
+   /**
+    * Shift Management
+    */
+   {
+      subheader: 'Shift Management',
+      items: [
+         {
+            title: 'Shift Calendar',
+            path: paths.dashboard.shift.calendar,
+            icon: icon('solar:calendar-bold-duotone'),
+         },
+         {
+            title: 'Manage Shift',
+            path: paths.dashboard.shift.root,
+            icon: icon('solar:calendar-add-bold-duotone'),
+         },
+         {
+            title: 'My Shifts',
+            path: paths.dashboard.shift.my,
+            icon: icon('solar:user-check-rounded-bold-duotone'),
+         },
+      ],
+   },
    // /**
    //  * CRUD Management
    //  */

@@ -99,11 +99,11 @@ export default function AccessItem({ role, onSuccess }: Props) {
                   </IconButton>
                </Box>
                <Box display="flex" flexWrap="wrap" gap={1}>
-                  {role.permissions.map((permission:any, i:number) => (
-                     <Tooltip key={i} title={permission.description} placement="bottom" arrow>
-                        <Chip label={permission.name} />
-                     </Tooltip>
-                  ))}
+               {(role.permissions ?? []).map((permission:any, i:number) => (
+                  <Tooltip key={i} title={permission.description} placement="bottom" arrow>
+                     <Chip label={permission.name} />
+                  </Tooltip>
+               ))}
                </Box>
             </CardContent>
 

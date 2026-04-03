@@ -112,6 +112,17 @@ export const paths = {
          check_in: `${ROOTS.DASHBOARD}/my-attendance/check-in`,
          check_out: `${ROOTS.DASHBOARD}/my-attendance/check-out`,
       },
+      // Shift Management
+      shift: {
+         root: `${ROOTS.DASHBOARD}/shift`,
+         calendar: `${ROOTS.DASHBOARD}/shift/calendar`,
+         my: `${ROOTS.DASHBOARD}/my-shift`,
+      },
+      // Salary
+      salary: {
+         root: `${ROOTS.DASHBOARD}/salary`,
+         report: `${ROOTS.DASHBOARD}/salary/report`,
+      },
       // Office
       office: {
          root: `${ROOTS.DASHBOARD}/offices`,

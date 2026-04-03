@@ -81,6 +81,25 @@ export function UserCUForm({ currentUser, open, onClose, onSuccess }: Props) {
    const { update, add } = useUserStore();
    const { roles } = useRoleStore();
 
+   // Normalisasi nomor telepon ke format E.164 (+62...) agar Field.Phone tidak crash
+   const normalizePhone = (phone?: string | number | null): string => {
+      if (!phone) return '';
+      const raw = String(phone).trim();
+      if (!raw) return '';
+      // Sudah E.164
+      if (raw.startsWith('+')) return raw;
+      // Coba parse dengan country code ID
+      try {
+         const parsed = parsePhoneNumber(raw, 'ID');
+         if (parsed) return parsed.number; // E.164
+      } catch (_) { /* lanjut ke fallback */ }
+      // Fallback manual: ganti leading 0 → +62
+      if (raw.startsWith('0')) return '+62' + raw.slice(1);
+      return '+62' + raw;
+   };
+
+   const normalizedPhone = normalizePhone(currentUser?.phone);
+
    const defaultValues: UserCUType = {
       image: currentUser?.image
          ? process.env.NEXT_PUBLIC_API_HOST + '/' + currentUser.image
@@ -89,8 +108,8 @@ export function UserCUForm({ currentUser, open, onClose, onSuccess }: Props) {
       username: currentUser?.username || '',
       role: currentUser?.role ?? null,
       email: currentUser?.email || '',
-      phoneNumber: currentUser?.phone ? String(currentUser.phone) : '',
-      phoneNumber_country_code: parsePhoneNumber(String(currentUser?.phone))?.country || '',
+      phoneNumber: normalizedPhone,
+      phoneNumber_country_code: parsePhoneNumber(normalizedPhone)?.country || 'ID',
    };
 
 
