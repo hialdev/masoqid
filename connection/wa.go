@@ -310,6 +310,9 @@ func InitWAClient() error {
 	defer clientMux.Unlock()
 
 	store.DeviceProps.Os = proto.String("AL WhatsApp")
+	if version, err := store.ParseVersion("2.3000.1036901331"); err == nil {
+		store.SetWAVersion(version)
+	}
 
 	if client != nil {
 		return nil
