@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { redirect } from 'next/navigation';
+import { CONFIG } from 'src/global-config';
 
 import { paths } from 'src/routes/al/paths';
 
@@ -8,12 +9,12 @@ import { paths } from 'src/routes/al/paths';
 // ----------------------------------------------------------------------
 
 export const metadata: Metadata = {
-  title: 'EMA - Hadir | Absence Management App',
+  title: CONFIG.appName,
   description:
-    'This is an Absence Management App for EMA - Hadir, manage all contents of official sites and web apps',
+    'Smart System for Attendance Management, Shift Management, and Smart Suspicious Detection',
 };
 
 export default function Page() {
-  return redirect(paths.dashboard.root);
+  return redirect(paths.auth.signIn);
 }
     
