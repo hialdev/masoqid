@@ -1,0 +1,73 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+import Footer from "../components/Footer.astro";
+import { translations } from "../i18n/translations";
+
+const privacySections = translations.id.privacy.sections;
+---
+
+<Layout
+   title="Privacy Policy - MASOQ.id"
+   description="Kebijakan Privasi MASOQ.id menjelaskan bagaimana kami melindungi dan mengelola data pribadi Anda dalam sistem absensi cerdas kami."
+>
+   <Navigation />
+   
+   <main class="py-24 bg-white">
+      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+         <div class="mb-12 border-b border-gray-100 pb-8">
+            <h1 
+               class="text-4xl font-extrabold tracking-tight text-text-main sm:text-5xl mb-4"
+               data-i18n="privacy.title"
+            >
+               Kebijakan Privasi
+            </h1>
+            <p 
+               class="text-sm text-text-muted font-medium"
+               data-i18n="privacy.last_updated"
+            >
+               Terakhir diperbarui: 10 April 2026
+            </p>
+         </div>
+
+         <div class="text-text-muted leading-relaxed">
+            <p 
+               class="mb-12 text-lg text-text-main/80 leading-relaxed"
+               data-i18n="privacy.intro"
+            >
+               Di MASOQ.id, kami menghargai privasi Anda dan berkomitmen untuk melindungi data pribadi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda saat Anda menggunakan sistem validasi kehadiran kami.
+            </p>
+
+            <div class="space-y-12">
+               {
+                  privacySections.map((section, index) => (
+                     <section class="group">
+                        <h2 
+                           class="text-2xl font-bold text-text-main mb-4 group-hover:text-primary transition-colors"
+                           data-i18n={`privacy.sections.${index}.title`}
+                        >
+                           {section.title}
+                        </h2>
+                        <p 
+                           class="text-base leading-relaxed text-text-muted"
+                           data-i18n={`privacy.sections.${index}.content`}
+                        >
+                           {section.content}
+                        </p>
+                     </section>
+                  ))
+               }
+            </div>
+            
+            <div class="mt-16 p-8 bg-blue-50 rounded-2xl border border-blue-100">
+               <h2 class="text-xl font-bold text-blue-900 mb-2">Hubungi Kami</h2>
+               <p class="text-blue-800/80 text-sm">
+                  Jika Anda memiliki pertanyaan tentang Kebijakan Privasi ini, silakan hubungi kami di <a href="mailto:hello@masoq.id" class="font-bold underline">hello@masoq.id</a>
+               </p>
+            </div>
+         </div>
+      </div>
+   </main>
+
+   <Footer />
+</Layout>

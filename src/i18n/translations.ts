@@ -171,6 +171,29 @@ export const translations = {
          demo: "Coba Demo",
          contact: "Hubungi Kami",
       },
+      privacy: {
+         title: "Kebijakan Privasi",
+         last_updated: "Terakhir diperbarui: 10 April 2026",
+         intro: "Di MASOQ.id, kami menghargai privasi Anda dan berkomitmen untuk melindungi data pribadi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda saat Anda menggunakan sistem validasi kehadiran kami.",
+         sections: [
+            {
+               title: "1. Informasi yang Kami Kumpulkan",
+               content: "Kami mengumpulkan informasi yang diperlukan untuk verifikasi kehadiran, termasuk nama, email, nomor telepon, koordinat GPS (untuk validasi lokasi), dan foto selfie (untuk deteksi wajah dan verifikasi liveness)."
+            },
+            {
+               title: "2. Penggunaan Informasi",
+               content: "Data yang dikumpulkan digunakan semata-mata untuk memvalidasi kehadiran, mencegah kecurangan (GPS spoofing), dan menyediakan laporan analitik bagi Departemen HR perusahaan Anda."
+            },
+            {
+               title: "3. Keamanan Data",
+               content: "Kami menerapkan standar keamanan enkripsi tingkat tinggi untuk melindungi data Anda dari akses yang tidak sah. Data lokasi dan biometrik disimpan secara aman di server kami."
+            },
+            {
+               title: "4. Berbagi Informasi",
+               content: "Kami tidak menjual atau membagikan data pribadi Anda kepada pihak ketiga untuk tujuan pemasaran. Data Anda hanya dapat diakses oleh administrator resmi di perusahaan tempat Anda bekerja."
+            }
+         ]
+      },
    },
    en: {
       nav: {
@@ -343,6 +366,29 @@ export const translations = {
          demo: "Try Demo",
          contact: "Contact Us",
       },
+      privacy: {
+         title: "Privacy Policy",
+         last_updated: "Last updated: April 10, 2026",
+         intro: "At MASOQ.id, we value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and protect your information when you use our attendance validation system.",
+         sections: [
+            {
+               title: "1. Information We Collect",
+               content: "We collect information necessary for attendance verification, including name, email, phone number, GPS coordinates (for location validation), and selfie photos (for face detection and liveness verification)."
+            },
+            {
+               title: "2. How We Use Information",
+               content: "The collected data is used solely to validate attendance, prevent fraud (GPS spoofing), and provide analytical reports to your company's HR Department."
+            },
+            {
+               title: "3. Data Security",
+               content: "We implement high-level encryption security standards to protect your data from unauthorized access. Location and biometric data are stored securely on our servers."
+            },
+            {
+               title: "4. Information Sharing",
+               content: "We do not sell or share your personal data with third parties for marketing purposes. Your data is only accessible by authorized administrators within your company."
+            }
+         ]
+      },
    },
    cn: {
       nav: {
@@ -514,6 +560,29 @@ export const translations = {
          price: "IDR 10,000 /员工/月",
          demo: "试用演示",
          contact: "联系我们",
+      },
+      privacy: {
+         title: "隐私政策",
+         last_updated: "最后更新：2026年4月10日",
+         intro: "在 MASOQ.id，我们重视您的隐私并致力于保护您的个人数据。本隐私政策解释了您在使用我们的考勤验证系统时，我们如何收集、使用和保护您的信息。",
+         sections: [
+            {
+               title: "1. 我们收集的信息",
+               content: "我们收集考勤验证所需的信息，包括姓名、电子邮件、电话号码、GPS 坐标（用于位置验证）以及自拍照片（用于人脸检测和活体验证）。"
+            },
+            {
+               title: "2. 我们如何使用信息",
+               content: "收集的数据仅用于验证考勤、防止欺诈（GPS 欺骗）并为贵公司的 HR 部门提供分析报告。"
+            },
+            {
+               title: "3. 数据安全",
+               content: "我们实施高水平的加密安全标准，以保护您的数据免受未经授权的访问。位置和生物识别数据安全地存储在我们的服务器上。"
+            },
+            {
+               title: "4. 信息共享",
+               content: "我们不会出于营销目的向第三方出售或共享您的个人数据。您的数据仅供您所在公司的授权管理员访问。"
+            }
+         ]
       },
    },
 };
