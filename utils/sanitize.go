@@ -45,7 +45,7 @@ func SanitizeAuthResponse(data interface{}) interface{} {
 
 	if mapData, ok := data.(fiber.Map); ok {
 		// Remove tokens from response body (they should only be in cookies)
-		delete(mapData, "access_token")
+		// delete(mapData, "access_token")
 		delete(mapData, "refresh_token")
 
 		// Sanitize user data if exists
@@ -73,7 +73,7 @@ func SanitizeAuthResponse(data interface{}) interface{} {
 		}
 
 		// Remove detailed permissions in production (client should fetch separately)
-		delete(mapData, "permissions")
+		// delete(mapData, "permissions")
 
 		return mapData
 	}

@@ -149,6 +149,9 @@ func (h *OtpHandler) SendOTP(c *fiber.Ctx) error {
 		if err != nil {
 			return utils.RespApi(c, "ise", "Failed send Email OTP to "+*otp.Email, err.Error())
 		}
+		if os.Getenv("APP_ENV") == "production" {
+			otp.Code = ""
+		}
 		return utils.RespApi(c, "ok", "OTP berhasil dikirim via Email", otp)
 	}
 
@@ -193,6 +196,9 @@ func (h *OtpHandler) SendOTP(c *fiber.Ctx) error {
 		return utils.RespApi(c, "ise", "Kesalahan dalam mengirim pesan whatsapp", err.Error())
 	}
 
+	if os.Getenv("APP_ENV") == "production" {
+		otp.Code = ""
+	}
 	return utils.RespApi(c, "ok", "OTP berhasil dikirim", otp)
 }
 
@@ -333,6 +339,9 @@ func (h *OtpHandler) ChangeSecurityOTP(c *fiber.Ctx) error {
 		if err != nil {
 			return utils.RespApi(c, "ise", "Failed send Email OTP to "+*otp.Email, err.Error())
 		}
+		if os.Getenv("APP_ENV") == "production" {
+			otp.Code = ""
+		}
 		return utils.RespApi(c, "ok", "OTP berhasil dikirim via Email", otp)
 	}
 
@@ -377,6 +386,9 @@ func (h *OtpHandler) ChangeSecurityOTP(c *fiber.Ctx) error {
 		return utils.RespApi(c, "ise", "Kesalahan dalam mengirim pesan whatsapp", err.Error())
 	}
 
+	if os.Getenv("APP_ENV") == "production" {
+		otp.Code = ""
+	}
 	return utils.RespApi(c, "ok", "OTP berhasil dikirim", otp)
 }
 

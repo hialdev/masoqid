@@ -15,7 +15,7 @@ type Otp struct {
 	Phone     *string   `json:"phone" validate:"omitempty,min=6,max=14"`
 	Email     *string   `json:"email" validate:"omitempty,email"`
 	IsEmail   bool      `json:"is_email"`
-	Code      string    `json:"code" gorm:"unique" validate:"required,len=6"`
+	Code      string    `json:"code,omitempty" gorm:"unique" validate:"required,len=6"`
 	ExpiredAt time.Time `json:"expired_at"`
 	Purpose   string    `json:"purpose" validate:"oneof=register changes verify login"`
 }
