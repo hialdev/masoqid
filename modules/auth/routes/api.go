@@ -75,10 +75,10 @@ func SetupAuthRoutes(app *fiber.App, db *gorm.DB) {
 	usr.Get("/", userHandler.GetUsers)
 	usr.Delete("/:id", userHandler.Delete)
 	usr.Post("/", userHandler.Create)
-	usr.Use(middlewares.DoACL("Update User")).Post("/:id", userHandler.Update)
-	usr.Use(middlewares.DoACL("Read User")).Get("/:id", userHandler.GetUser)
-	usr.Use(middlewares.DoACL("Assign User")).Post("/:id/assign", userHandler.AssignRole)
-	usr.Use(middlewares.DoACL("Assign Office")).Post("/:id/assign-office", userHandler.AssignOffice) // ✅ NEW
+	usr.Post("/:id", middlewares.DoACL("Update User"), userHandler.Update)
+	usr.Get("/:id", middlewares.DoACL("Read User"), userHandler.GetUser)
+	usr.Post("/:id/assign", middlewares.DoACL("Assign User"), userHandler.AssignRole)
+	usr.Post("/:id/assign-office", middlewares.DoACL("Assign Office"), userHandler.AssignOffice) // ✅ NEW
 
 	roles := handlers.NewRoleHandler(db)
 	rl := api.Group("/roles")

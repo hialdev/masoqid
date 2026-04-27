@@ -63,11 +63,30 @@ func (h *ShiftHandler) GetMonthlySchedule(c *fiber.Ctx) error {
 	query := h.DB.Model(&models.Shift{}).Table("shifts").
 		Where("shifts.date BETWEEN ? AND ?", firstDay.Format("2006-01-02"), lastDay.Format("2006-01-02"))
 
+	joinedUsers := false
+ 
+	// Filter by company_id if user is Company Owner
+	userIDStrFromCtx, ok := c.Locals("user_id").(string)
+	if ok && userIDStrFromCtx != "" {
+		var currentUser authModels.User
+		if err := h.DB.Preload("Role").First(&currentUser, "id = ?", userIDStrFromCtx).Error; err == nil {
+			isManager := currentUser.Role.Name == "Company Owner" || currentUser.Role.Name == "Office Manager"
+			if currentUser.RoleID != nil && isManager && currentUser.CompanyID != nil {
+				query = query.Joins("JOIN users ON users.id = shifts.user_id")
+				query = query.Where("users.company_id = ?", currentUser.CompanyID)
+				joinedUsers = true
+			}
+		}
+	}
+ 
 	// Filter by office — join ke tabel users berdasarkan office_id user
 	if officeIDStr != "" {
 		if oid, err := uuid.Parse(officeIDStr); err == nil {
-			query = query.Joins("JOIN users ON users.id = shifts.user_id").
-				Where("users.office_id = ?", oid)
+			if !joinedUsers {
+				query = query.Joins("JOIN users ON users.id = shifts.user_id")
+				joinedUsers = true
+			}
+			query = query.Where("users.office_id = ?", oid)
 		}
 	}
 
@@ -200,6 +219,7 @@ func (h *ShiftHandler) UpdateShift(c *fiber.Ctx) error {
 	}
 
 	updates := map[string]interface{}{}
+	oldUserID := shift.UserID
 
 	if input.UserID != "" {
 		if uid, err := uuid.Parse(input.UserID); err == nil {
@@ -226,12 +246,25 @@ func (h *ShiftHandler) UpdateShift(c *fiber.Ctx) error {
 		return utils.RespApi(c, "ise", "Gagal memperbarui shift", err.Error())
 	}
 
-	// Refresh
-	h.DB.First(&shift, "id = ?", id)
-	var u authModels.User
-	if err := h.DB.Select("id, name, image").First(&u, "id = ?", shift.UserID).Error; err == nil {
-		shift.User = u
+	// Record Log
+	modifierIDStr, _ := c.Locals("user_id").(string)
+	modifierID, _ := uuid.Parse(modifierIDStr)
+	
+	log := models.ShiftLog{
+		ShiftID:   shift.ID,
+		Type:      "update",
+		ChangedBy: modifierID,
+		Reason:    "Manual update by admin",
 	}
+	
+	if input.UserID != "" {
+		newUID, _ := uuid.Parse(input.UserID)
+		log.OldUserID = &oldUserID
+		log.NewUserID = &newUID
+	}
+	// Track other fields if needed, but User change is most critical
+	
+	h.DB.Create(&log)
 
 	return utils.RespApi(c, "ok", "Shift berhasil diperbarui", shift)
 }
@@ -285,6 +318,7 @@ func (h *ShiftHandler) SwitchShifts(c *fiber.Ctx) error {
 	}
 
 	var shiftA, shiftB models.Shift
+	var userAID, userBID uuid.UUID
 
 	err = h.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&shiftA, "id = ?", shiftAID).Error; err != nil {
@@ -294,9 +328,9 @@ func (h *ShiftHandler) SwitchShifts(c *fiber.Ctx) error {
 			return err
 		}
 
-		// Tukar UserID
-		userAID := shiftA.UserID
-		userBID := shiftB.UserID
+		// Simpan ID lama untuk ditukar
+		userAID = shiftA.UserID
+		userBID = shiftB.UserID
 
 		if err := tx.Model(&shiftA).Update("user_id", userBID).Error; err != nil {
 			return err
@@ -322,6 +356,27 @@ func (h *ShiftHandler) SwitchShifts(c *fiber.Ctx) error {
 	if err := h.DB.Select("id, name, image").First(&uB, "id = ?", shiftB.UserID).Error; err == nil {
 		shiftB.User = uB
 	}
+
+	// Record Logs for both shifts
+	modifierIDStr, _ := c.Locals("user_id").(string)
+	modifierID, _ := uuid.Parse(modifierIDStr)
+	
+	h.DB.Create(&models.ShiftLog{
+		ShiftID:    shiftAID,
+		Type:       "switch",
+		OldUserID:  &userAID,
+		NewUserID:  &userBID,
+		ChangedBy:  modifierID,
+		Reason:     "Shift switch action",
+	})
+	h.DB.Create(&models.ShiftLog{
+		ShiftID:    shiftBID,
+		Type:       "switch",
+		OldUserID:  &userBID,
+		NewUserID:  &userAID,
+		ChangedBy:  modifierID,
+		Reason:     "Shift switch action",
+	})
 
 	return utils.RespApi(c, "ok", "Shift berhasil ditukar", fiber.Map{
 		"shift_a": shiftA,
@@ -357,12 +412,31 @@ func (h *ShiftHandler) GetAllShifts(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	query := h.DB.Model(&models.Shift{}).Table("shifts")
-
+	joinedUsers := false
+ 
+	// --- Multi-tenancy: Filter by current user's company
+	userIDStrFromCtx, ok := c.Locals("user_id").(string)
+	if ok && userIDStrFromCtx != "" {
+		var currentUser authModels.User
+		if err := h.DB.Preload("Role").First(&currentUser, "id = ?", userIDStrFromCtx).Error; err == nil {
+			isManager := currentUser.Role.Name == "Company Owner" || currentUser.Role.Name == "Office Manager"
+			if currentUser.RoleID != nil && isManager && currentUser.CompanyID != nil {
+				query = query.Joins("JOIN users ON users.id = shifts.user_id")
+				query = query.Where("users.company_id = ?", currentUser.CompanyID)
+				joinedUsers = true
+			}
+		}
+	}
+ 
 	// Filter by office — join ke tabel users
 	if officeIDStr := c.Query("office_id"); officeIDStr != "" {
-		query = query.Joins("JOIN users ON users.id = shifts.user_id").
-			Where("users.office_id = ?", officeIDStr)
+		if !joinedUsers {
+			query = query.Joins("JOIN users ON users.id = shifts.user_id")
+			joinedUsers = true
+		}
+		query = query.Where("users.office_id = ?", officeIDStr)
 	}
+ 
 	if userIDStr := c.Query("user_id"); userIDStr != "" {
 		query = query.Where("shifts.user_id = ?", userIDStr)
 	}
@@ -391,3 +465,97 @@ func (h *ShiftHandler) GetAllShifts(c *fiber.Ctx) error {
 		"limit": limit,
 	})
 }
+
+// BulkCreateShifts - POST /api/shifts/bulk
+// Body: { "shifts": [ { user_id, date, start_time, end_time, office_id?, note? }, ... ] }
+func (h *ShiftHandler) BulkCreateShifts(c *fiber.Ctx) error {
+	var input struct {
+		Shifts []ShiftInput `json:"shifts" validate:"required,min=1,max=200,dive"`
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		return utils.RespApi(c, "bad", "Request body tidak valid", err.Error())
+	}
+
+	if len(input.Shifts) == 0 {
+		return utils.RespApi(c, "bad", "Minimal 1 shift harus dikirim", nil)
+	}
+
+	loc, _ := time.LoadLocation("Local")
+	var toInsert []models.Shift
+
+	for _, s := range input.Shifts {
+		userID, err := uuid.Parse(s.UserID)
+		if err != nil {
+			return utils.RespApi(c, "bad", "Format user_id tidak valid: "+s.UserID, nil)
+		}
+		date, err := time.ParseInLocation("2006-01-02", s.Date, loc)
+		if err != nil {
+			return utils.RespApi(c, "bad", "Format tanggal tidak valid: "+s.Date, nil)
+		}
+
+		shift := models.Shift{
+			UserID:    userID,
+			Date:      date,
+			StartTime: s.StartTime,
+			EndTime:   s.EndTime,
+		}
+
+		if s.OfficeID != "" {
+			if oid, err := uuid.Parse(s.OfficeID); err == nil {
+				shift.OfficeID = &oid
+			}
+		}
+		if s.Note != "" {
+			shift.Note = &s.Note
+		}
+
+		toInsert = append(toInsert, shift)
+	}
+
+	if err := h.DB.Transaction(func(tx *gorm.DB) error {
+		return tx.Create(&toInsert).Error
+	}); err != nil {
+		return utils.RespApi(c, "ise", "Gagal membuat bulk shift", err.Error())
+	}
+
+	return utils.RespApi(c, "ok", "Bulk shift berhasil dibuat", fiber.Map{
+		"created": len(toInsert),
+	})
+}
+
+// BulkDeleteShifts - DELETE /api/shifts/bulk
+// Body: { "shift_ids": ["uuid1", "uuid2", ...] }
+func (h *ShiftHandler) BulkDeleteShifts(c *fiber.Ctx) error {
+	var input struct {
+		ShiftIDs []string `json:"shift_ids" validate:"required,min=1"`
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		return utils.RespApi(c, "bad", "Request body tidak valid", err.Error())
+	}
+
+	if len(input.ShiftIDs) == 0 {
+		return utils.RespApi(c, "bad", "Minimal 1 shift ID harus dikirim", nil)
+	}
+
+	// Parse UUIDs
+	ids := make([]uuid.UUID, 0, len(input.ShiftIDs))
+	for _, idStr := range input.ShiftIDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return utils.RespApi(c, "bad", "Format ID tidak valid: "+idStr, nil)
+		}
+		ids = append(ids, id)
+	}
+
+	result := h.DB.Where("id IN ?", ids).Delete(&models.Shift{})
+	if result.Error != nil {
+		return utils.RespApi(c, "ise", "Gagal menghapus bulk shift", result.Error.Error())
+	}
+
+	return utils.RespApi(c, "ok", "Bulk shift berhasil dihapus", fiber.Map{
+		"deleted": result.RowsAffected,
+	})
+}
+

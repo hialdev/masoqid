@@ -56,6 +56,9 @@ func main() {
 		&models.Permission{},
 		&models.Otp{},
 
+		// CMS - Company must be created first (root entity)
+		&CMSModels.Company{},
+
 		// CMS - Office must be created first before User (FK constraint)
 		&CMSModels.Office{},
 		&CMSModels.SettingGroup{},
@@ -65,8 +68,13 @@ func main() {
 		&CMSModels.AttendanceSuspiciousLog{},
 		&CMSModels.Shift{},
 
-		// User last because it has FK to Office
+		// User last because it has FK to Office & Company
 		&models.User{},
+
+		// Profile & ShiftSwitchRequest depend on User
+		&CMSModels.Profile{},
+		&CMSModels.ShiftSwitchRequest{},
+		&CMSModels.ShiftLog{},
 	)
 
 	routes.InitRoutes(app, connection.DB)

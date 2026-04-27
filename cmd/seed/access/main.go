@@ -21,12 +21,10 @@ func main() {
 		log.Fatal("❗ Gagal mendapatkan data file .env", err.Error())
 	}
 
-	// Init DB
 	connection.InitDB()
 	db := connection.DB
 
-	// --- Step 1: Scan & Create Permissions ---
-	fmt.Println("\n🚀 Memulai Seeding URP Khusus Super Admin...\n")
+	fmt.Println("\n🚀 Memulai Seeding Roles & Permissions...\n")
 
 	files := []string{
 		"modules/cms/routes/api.go",
@@ -44,14 +42,14 @@ func main() {
 	var allPermissions []authModels.Permission
 	var createdPerms, skippedPerms int
 
-	// Transaction start
 	db.Transaction(func(tx *gorm.DB) error {
-		// 1. Ensure all permissions exist
+		// ────────────────────────────────────────────────
+		// 1. Sync semua permissions dari routes
+		// ────────────────────────────────────────────────
 		for _, acl := range acls {
 			var perm authModels.Permission
 			err := tx.Where("name = ?", acl).First(&perm).Error
 			if err != nil {
-				// Create new
 				perm = authModels.Permission{
 					Name:        acl,
 					Description: strPtr("Can " + acl),
@@ -65,72 +63,9 @@ func main() {
 			}
 			allPermissions = append(allPermissions, perm)
 		}
-
 		fmt.Printf("\n✅ Permission Sync Selesai: %d created, %d existing\n", createdPerms, skippedPerms)
 
-		// 2. Handle Super Admin Role
-		var superAdminRole authModels.Role
-		err := tx.Where("name = ?", "Super Admin").First(&superAdminRole).Error
-		if err != nil {
-			// Create Role if not exists
-			superAdminRole = authModels.Role{
-				Name:        "Super Admin",
-				Description: strPtr("Role dengan akses penuh"),
-			}
-			if err := tx.Create(&superAdminRole).Error; err != nil {
-				return fmt.Errorf("gagal membuat role Super Admin: %v", err)
-			}
-			fmt.Println("\n✅ Role 'Super Admin' berhasil dibuat")
-		} else {
-			fmt.Println("\nℹ️ Role 'Super Admin' sudah ada")
-		}
-
-		// 3. Assign ALL Permissions to Super Admin Role
-		if err := tx.Model(&superAdminRole).Association("Permissions").Replace(allPermissions); err != nil {
-			return fmt.Errorf("gagal assign permission ke role Super Admin: %v", err)
-		}
-		fmt.Printf("✅ %d Permission telah di-assign ke role 'Super Admin'\n", len(allPermissions))
-
-		// 4. Ensure Super Admin User
-		var superAdminUser authModels.User
-		err = tx.Where("email = ?", "mna.official12@gmail.com").First(&superAdminUser).Error
-		if err != nil {
-			// Create User
-			trueVal := true
-			superAdminUser = authModels.User{
-				BaseModel: globalModels.BaseModel{
-					ID:        uuid.New(),
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				Name:            strPtr("Super Admin"),
-				Username:        strPtr("superadmin"),
-				Email:           strPtr("mna.official12@gmail.com"),
-				Phone:           strPtr("+6289671052050"), // Dummy phone
-				CountryCode:     strPtr("ID"),
-				RoleID:          &superAdminRole.ID,
-				EmailVerifiedAt: &trueVal,
-				PhoneVerifiedAt: &trueVal,
-			}
-
-			if err := tx.Create(&superAdminUser).Error; err != nil {
-				return fmt.Errorf("gagal membuat user Super Admin: %v", err)
-			}
-			fmt.Println("\n✅ User 'superadmin' berhasil dibuat")
-		} else {
-			// Update Role ID assurance
-			if superAdminUser.RoleID == nil || *superAdminUser.RoleID != superAdminRole.ID {
-				superAdminUser.RoleID = &superAdminRole.ID
-				if err := tx.Save(&superAdminUser).Error; err != nil {
-					return fmt.Errorf("gagal update role user Super Admin: %v", err)
-				}
-				fmt.Println("\n✅ User 'superadmin' updated dengan Role Super Admin")
-			} else {
-				fmt.Println("\nℹ️ User 'superadmin' sudah ada dan role sesuai")
-			}
-		}
-
-		// 5. Helper: cari permission by name dari allPermissions
+		// Helper: cari permission by name dari allPermissions
 		findPerms := func(names []string) []authModels.Permission {
 			var result []authModels.Permission
 			for _, name := range names {
@@ -144,50 +79,150 @@ func main() {
 			return result
 		}
 
-		// 6. Role Manager
-		managerPermissions := []string{
-			"Read User", "Update User", "Assign User", "Assign Office",
-			"Read Office", "Import Office",
-			"Read Shift", "Add Shift", "Update Shift", "Delete Shift",
-			"Read Salary", "Update User Salary",
-			"Read Attendance",
-			"Read Setting",
-			"Read ExampleRich",
-		}
-
-		var managerRole authModels.Role
-		if err := tx.Where("name = ?", "Manager").First(&managerRole).Error; err != nil {
-			managerRole = authModels.Role{
-				Name:        "Manager",
-				Description: strPtr("Akses manajemen karyawan, shift, dan laporan"),
+		// ────────────────────────────────────────────────
+		// 2. ROLE: Super Admin — all permissions
+		// ────────────────────────────────────────────────
+		var superAdminRole authModels.Role
+		if err := tx.Where("name = ?", "Super Admin").First(&superAdminRole).Error; err != nil {
+			superAdminRole = authModels.Role{
+				Name:        "Super Admin",
+				Description: strPtr("Developer / System Administrator dengan akses penuh"),
 			}
-			if err := tx.Create(&managerRole).Error; err != nil {
-				return fmt.Errorf("gagal membuat role Manager: %v", err)
-			}
-			fmt.Println("\n✅ Role 'Manager' berhasil dibuat")
+			tx.Create(&superAdminRole)
+			fmt.Println("\n✅ Role 'Super Admin' berhasil dibuat")
 		} else {
-			fmt.Println("\nℹ️ Role 'Manager' sudah ada")
+			fmt.Println("\nℹ️ Role 'Super Admin' sudah ada")
 		}
-		if err := tx.Model(&managerRole).Association("Permissions").Replace(findPerms(managerPermissions)); err != nil {
-			return fmt.Errorf("gagal assign permission ke Manager: %v", err)
-		}
-		fmt.Printf("✅ %d permission di-assign ke role 'Manager'\n", len(managerPermissions))
+		tx.Model(&superAdminRole).Association("Permissions").Replace(allPermissions)
+		fmt.Printf("✅ %d Permission di-assign ke 'Super Admin'\n", len(allPermissions))
 
-		// 7. Role Karyawan (tidak ada permission ACL — akses via JWT-only endpoints)
+		// Ensure Super Admin user
+		var superAdminUser authModels.User
+		if err := tx.Where("email = ?", "mna.official12@gmail.com").First(&superAdminUser).Error; err != nil {
+			trueVal := true
+			superAdminUser = authModels.User{
+				BaseModel:       globalModels.BaseModel{ID: uuid.New(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
+				Name:            strPtr("Super Admin"),
+				Username:        strPtr("superadmin"),
+				Email:           strPtr("mna.official12@gmail.com"),
+				Phone:           strPtr("+6289671052050"),
+				CountryCode:     strPtr("ID"),
+				RoleID:          &superAdminRole.ID,
+				EmailVerifiedAt: &trueVal,
+				PhoneVerifiedAt: &trueVal,
+			}
+			tx.Create(&superAdminUser)
+			fmt.Println("✅ User 'superadmin' berhasil dibuat")
+		} else {
+			if superAdminUser.RoleID == nil || *superAdminUser.RoleID != superAdminRole.ID {
+				tx.Model(&superAdminUser).Update("role_id", superAdminRole.ID)
+				fmt.Println("✅ User 'superadmin' role diperbarui")
+			} else {
+				fmt.Println("ℹ️ User 'superadmin' sudah ada dan role sesuai")
+			}
+		}
+
+		// ────────────────────────────────────────────────
+		// 3. ROLE: Company Owner
+		// ────────────────────────────────────────────────
+		companyOwnerPermissions := []string{
+			// Company management
+			"Read Company",
+			// Office management
+			"Read Office", "Add Office", "Update Office", "Delete Office", "Import Office", "Assign Office",
+			// Employee / Profile management
+			"Read Employee", "Add Employee", "Update Employee", "Delete Employee",
+			// Shift management
+			"Read Shift", "Add Shift", "Update Shift", "Delete Shift",
+			// Attendance
+			"Read Attendance",
+			// Shift Switch (approve/reject)
+			"Read Shift Switch", "Approve Shift Switch", "Reject Shift Switch",
+			// Salary
+			"Read Salary", "Update User Salary",
+			// User access (assign as Office Manager)
+			"Read User", "Update User", "Assign User", "Assign Office",
+			// Settings (read only)
+			"Read Setting",
+		}
+
+		var companyOwnerRole authModels.Role
+		if err := tx.Where("name = ?", "Company Owner").First(&companyOwnerRole).Error; err != nil {
+			companyOwnerRole = authModels.Role{
+				Name:        "Company Owner",
+				Description: strPtr("Pemilik perusahaan — kelola semua office dan karyawan"),
+			}
+			tx.Create(&companyOwnerRole)
+			fmt.Println("\n✅ Role 'Company Owner' berhasil dibuat")
+		} else {
+			fmt.Println("\nℹ️ Role 'Company Owner' sudah ada")
+		}
+		coPerms := findPerms(companyOwnerPermissions)
+		tx.Model(&companyOwnerRole).Association("Permissions").Replace(coPerms)
+		fmt.Printf("✅ %d permission di-assign ke 'Company Owner'\n", len(coPerms))
+
+		// ────────────────────────────────────────────────
+		// 4. ROLE: Office Manager
+		// ────────────────────────────────────────────────
+		officeManagerPermissions := []string{
+			// Company
+			"Read Company",
+			// Office
+			"Read Office", "Import Office", "Assign Office",
+			// Employee
+			"Read Employee", "Add Employee", "Update Employee", "Delete Employee",
+			// Shift management
+			"Read Shift", "Add Shift", "Update Shift", "Delete Shift",
+			// Attendance
+			"Read Attendance",
+			// Shift Switch (approve/reject)
+			"Read Shift Switch", "Approve Shift Switch", "Reject Shift Switch",
+			// Salary
+			"Read Salary",
+			// Settings
+			"Read Setting",
+		}
+
+		var officeManagerRole authModels.Role
+		// Jika masih ada role "Manager" lama, rename ke "Office Manager"
+		var oldManagerRole authModels.Role
+		if err := tx.Where("name = ?", "Manager").First(&oldManagerRole).Error; err == nil {
+			tx.Model(&oldManagerRole).Update("name", "Office Manager")
+			tx.Model(&oldManagerRole).Update("description", "Manager satu office — kelola karyawan dan shift di office-nya")
+			officeManagerRole = oldManagerRole
+			fmt.Println("ℹ️ Role 'Manager' diubah nama menjadi 'Office Manager'")
+		} else if err := tx.Where("name = ?", "Office Manager").First(&officeManagerRole).Error; err != nil {
+			officeManagerRole = authModels.Role{
+				Name:        "Office Manager",
+				Description: strPtr("Manager satu office — kelola karyawan dan shift di office-nya"),
+			}
+			tx.Create(&officeManagerRole)
+			fmt.Println("✅ Role 'Office Manager' berhasil dibuat")
+		} else {
+			fmt.Println("ℹ️ Role 'Office Manager' sudah ada")
+		}
+		omPerms := findPerms(officeManagerPermissions)
+		tx.Model(&officeManagerRole).Association("Permissions").Replace(omPerms)
+		fmt.Printf("✅ %d permission di-assign ke 'Office Manager'\n", len(omPerms))
+
+		// ────────────────────────────────────────────────
+		// 5. ROLE: Karyawan / Employee — no ACL permissions
+		//    Akses via JWT-only endpoints: /my-attendance,
+		//    /my-shifts, /my-profile, /my-shift-switch-requests
+		// ────────────────────────────────────────────────
 		var karyawanRole authModels.Role
 		if err := tx.Where("name = ?", "Karyawan").First(&karyawanRole).Error; err != nil {
 			karyawanRole = authModels.Role{
 				Name:        "Karyawan",
-				Description: strPtr("Akses terbatas: lihat shift sendiri dan absensi sendiri"),
+				Description: strPtr("Karyawan — akses terbatas: absensi, shift, dan profil sendiri"),
 			}
-			if err := tx.Create(&karyawanRole).Error; err != nil {
-				return fmt.Errorf("gagal membuat role Karyawan: %v", err)
-			}
+			tx.Create(&karyawanRole)
 			fmt.Println("\n✅ Role 'Karyawan' berhasil dibuat")
 		} else {
 			fmt.Println("\nℹ️ Role 'Karyawan' sudah ada")
 		}
-		// Karyawan tidak perlu permission ACL — my-shifts, my-attendance, profile cukup JWT
+		// Clear any old permissions
+		tx.Model(&karyawanRole).Association("Permissions").Clear()
 		fmt.Println("ℹ️ Role 'Karyawan' tidak memiliki permission ACL (akses via JWT-only endpoints)")
 
 		return nil
@@ -197,6 +232,11 @@ func main() {
 	fmt.Println("\n" + separator)
 	fmt.Println("🎉 SEEDING SELESAI 🎉")
 	fmt.Println(separator)
+	fmt.Println("\nRoles yang aktif:")
+	fmt.Println("  1. Super Admin     → All Access")
+	fmt.Println("  2. Company Owner   → Office, Employee, Shift, Attendance, Reports")
+	fmt.Println("  3. Office Manager  → Employee, Shift, Attendance (scope 1 office)")
+	fmt.Println("  4. Karyawan        → JWT-only: my-attendance, my-shifts, my-profile")
 }
 
 func strPtr(s string) *string {

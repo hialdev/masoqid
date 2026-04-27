@@ -338,6 +338,19 @@ func (h *AttendanceHandler) GetAllAttendance(c *fiber.Ctx) error {
 
 	db := h.DB.Model(&models.Attendance{})
 
+	// Filter by company_id if user is Company Owner
+	userIDStr, ok := c.Locals("user_id").(string)
+	if ok && userIDStr != "" {
+		var currentUser authModels.User
+		if err := h.DB.Preload("Role").First(&currentUser, "id = ?", userIDStr).Error; err == nil {
+			isManager := currentUser.Role.Name == "Company Owner" || currentUser.Role.Name == "Office Manager"
+			if currentUser.RoleID != nil && isManager && currentUser.CompanyID != nil {
+				db = db.Joins("JOIN users ON users.id = attendances.user_id").
+					Where("users.company_id = ?", currentUser.CompanyID)
+			}
+		}
+	}
+
 	if qUserID := c.Query("user_id"); qUserID != "" {
 		db = db.Where("user_id = ?", qUserID)
 	}
@@ -346,6 +359,16 @@ func (h *AttendanceHandler) GetAllAttendance(c *fiber.Ctx) error {
 		// Split comma-separated IDs
 		ids := strings.Split(qUserIDs, ",")
 		db = db.Where("user_id IN ?", ids)
+	}
+ 
+	if qOfficeIDs := c.Query("office_ids"); qOfficeIDs != "" {
+		ids := strings.Split(qOfficeIDs, ",")
+		// Check if already joined with users
+		var count int64
+		h.DB.Raw("SELECT count(*) FROM information_schema.tables WHERE table_name = 'users'").Scan(&count) // This is not reliable for GORM joins
+		// Better: use a flag or check Joins in GORM
+		db = db.Joins("JOIN users u_off ON u_off.id = attendances.user_id").
+			Where("u_off.office_id IN ?", ids)
 	}
 
 	// Filter Date Range

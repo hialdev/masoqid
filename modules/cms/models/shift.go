@@ -15,6 +15,8 @@ type Shift struct {
 	StartTime string     `json:"start_time" gorm:"type:varchar(5);not null"`
 	EndTime   string     `json:"end_time" gorm:"type:varchar(5);not null"`
 	Note      *string    `json:"note,omitempty" gorm:"type:text"`
+	
+	Office    *Office    `json:"office,omitempty" gorm:"foreignKey:OfficeID"`
 
 	// Populated manually (avoid circular import)
 	User interface{} `json:"user,omitempty" gorm:"-"`

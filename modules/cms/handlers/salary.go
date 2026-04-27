@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -87,7 +88,7 @@ func (h *SalaryHandler) UpdateUserSalary(c *fiber.Ctx) error {
 }
 
 // buildSalaryReport adalah helper untuk membangun data laporan gaji
-func (h *SalaryHandler) buildSalaryReport(month, userIDStr string) ([]SalaryReportRow, error) {
+func (h *SalaryHandler) buildSalaryReport(month, userIDStr, officeIDsStr string, companyID *uuid.UUID) ([]SalaryReportRow, error) {
 	loc, _ := time.LoadLocation("Local")
 	firstDay, err := time.ParseInLocation("2006-01", month, loc)
 	if err != nil {
@@ -101,6 +102,15 @@ func (h *SalaryHandler) buildSalaryReport(month, userIDStr string) ([]SalaryRepo
 		if uid, err := uuid.Parse(userIDStr); err == nil {
 			query = query.Where("id = ?", uid)
 		}
+	}
+ 
+	if officeIDsStr != "" {
+		ids := strings.Split(officeIDsStr, ",")
+		query = query.Where("office_id IN ?", ids)
+	}
+ 
+	if companyID != nil {
+		query = query.Where("company_id = ?", companyID)
 	}
 
 	var users []authModels.User
@@ -151,8 +161,21 @@ func (h *SalaryHandler) buildSalaryReport(month, userIDStr string) ([]SalaryRepo
 func (h *SalaryHandler) GetSalaryReport(c *fiber.Ctx) error {
 	month := c.Query("month", time.Now().Format("2006-01"))
 	userIDStr := c.Query("user_id", "")
-
-	rows, err := h.buildSalaryReport(month, userIDStr)
+	officeIDsStr := c.Query("office_ids", "")
+ 
+	var companyID *uuid.UUID
+	currUserID, ok := c.Locals("user_id").(string)
+	if ok && currUserID != "" {
+		var u authModels.User
+		if err := h.DB.Preload("Role").First(&u, "id = ?", currUserID).Error; err == nil {
+			isManager := u.Role.Name == "Company Owner" || u.Role.Name == "Office Manager"
+			if u.RoleID != nil && isManager && u.CompanyID != nil {
+				companyID = u.CompanyID
+			}
+		}
+	}
+ 
+	rows, err := h.buildSalaryReport(month, userIDStr, officeIDsStr, companyID)
 	if err != nil {
 		return utils.RespApi(c, "bad", err.Error(), nil)
 	}
@@ -168,12 +191,25 @@ func (h *SalaryHandler) ExportSalaryReport(c *fiber.Ctx) error {
 	month := c.Query("month", time.Now().Format("2006-01"))
 	format := c.Query("format", "xlsx")
 	userIDStr := c.Query("user_id", "")
-
+	officeIDsStr := c.Query("office_ids", "")
+ 
 	if format != "xlsx" && format != "csv" {
 		return utils.RespApi(c, "bad", "Format harus 'xlsx' atau 'csv'", nil)
 	}
-
-	rows, err := h.buildSalaryReport(month, userIDStr)
+ 
+	var companyID *uuid.UUID
+	currUserID, ok := c.Locals("user_id").(string)
+	if ok && currUserID != "" {
+		var u authModels.User
+		if err := h.DB.Preload("Role").First(&u, "id = ?", currUserID).Error; err == nil {
+			isManager := u.Role.Name == "Company Owner" || u.Role.Name == "Office Manager"
+			if u.RoleID != nil && isManager && u.CompanyID != nil {
+				companyID = u.CompanyID
+			}
+		}
+	}
+ 
+	rows, err := h.buildSalaryReport(month, userIDStr, officeIDsStr, companyID)
 	if err != nil {
 		return utils.RespApi(c, "bad", err.Error(), nil)
 	}

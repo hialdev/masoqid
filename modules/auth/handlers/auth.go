@@ -38,6 +38,10 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return utils.SecureRespApi(c, "perm", "Login gagal", err.Error(), true)
 	}
 
+	if user.RoleID != nil && user.Role.Name == "Company Owner" && user.CompanyID == nil {
+		return utils.SecureRespApi(c, "perm", "Anda belum terkait dengan perusahaan manapun", nil, true)
+	}
+
 	httpOnly := false
 	if val := os.Getenv("COOKIE_HTTPONLY"); val != "" {
 		httpOnly, _ = strconv.ParseBool(val) // Error diabaikan, default tetap false

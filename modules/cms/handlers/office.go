@@ -13,15 +13,16 @@ import (
 )
 
 type OfficeInput struct {
-	Name              string  `json:"name" validate:"required,min=3,max=255"`
-	Description       *string `json:"description"`
-	Address           string  `json:"address" validate:"required"`
-	Latitude          float64 `json:"latitude" validate:"required,min=-90,max=90"`
-	Longitude         float64 `json:"longitude" validate:"required,min=-180,max=180"`
-	IsStrictRadius    bool    `json:"is_strict_radius"`
-	RadiusForCheckin  bool    `json:"radius_for_checkin"`
-	RadiusForCheckout bool    `json:"radius_for_checkout"`
-	RadiusAllow       float64 `json:"radius_allow" validate:"required,min=1,max=10000"`
+	Name              string     `json:"name" validate:"required,min=3,max=255"`
+	Description       *string    `json:"description"`
+	Address           string     `json:"address" validate:"required"`
+	Latitude          float64    `json:"latitude" validate:"required,min=-90,max=90"`
+	Longitude         float64    `json:"longitude" validate:"required,min=-180,max=180"`
+	IsStrictRadius    bool       `json:"is_strict_radius"`
+	RadiusForCheckin  bool       `json:"radius_for_checkin"`
+	RadiusForCheckout bool       `json:"radius_for_checkout"`
+	RadiusAllow       float64    `json:"radius_allow" validate:"required,min=1,max=10000"`
+	CompanyID         *uuid.UUID `json:"company_id"` // opsional
 }
 
 type OfficeHandler struct {
@@ -45,6 +46,18 @@ func (h *OfficeHandler) GetAllOffices(c *fiber.Ctx) error {
 
 	query := h.DB.Model(&cmsModels.Office{})
 
+	// Filter by company_id if user is Company Owner
+	userIDStr, ok := c.Locals("user_id").(string)
+	if ok && userIDStr != "" {
+		var currentUser models.User
+		if err := h.DB.Preload("Role").First(&currentUser, "id = ?", userIDStr).Error; err == nil {
+			isManager := currentUser.Role.Name == "Company Owner" || currentUser.Role.Name == "Office Manager"
+			if currentUser.RoleID != nil && isManager && currentUser.CompanyID != nil {
+				query = query.Where("company_id = ?", currentUser.CompanyID)
+			}
+		}
+	}
+
 	// Search by name or address
 	if search != "" {
 		query = query.Where("name LIKE ? OR address LIKE ?", "%"+search+"%", "%"+search+"%")
@@ -59,6 +72,7 @@ func (h *OfficeHandler) GetAllOffices(c *fiber.Ctx) error {
 	// Get offices with user count
 	if err := query.
 		Preload("Users").
+		Preload("Company").
 		Offset(offset).
 		Limit(limit).
 		Order("created_at DESC").
@@ -97,7 +111,7 @@ func (h *OfficeHandler) GetOffice(c *fiber.Ctx) error {
 	}
 
 	var office cmsModels.Office
-	if err := h.DB.Preload("Users").First(&office, "id = ?", id).Error; err != nil {
+	if err := h.DB.Preload("Users").Preload("Company").First(&office, "id = ?", id).Error; err != nil {
 		return utils.RespApi(c, "ise", "Gagal mendapatkan data office", err.Error())
 	}
 
@@ -129,11 +143,15 @@ func (h *OfficeHandler) CreateOffice(c *fiber.Ctx) error {
 		RadiusForCheckin:  input.RadiusForCheckin,
 		RadiusForCheckout: input.RadiusForCheckout,
 		RadiusAllow:       input.RadiusAllow,
+		CompanyID:         input.CompanyID,
 	}
 
 	if err := h.DB.Create(&office).Error; err != nil {
 		return utils.RespApi(c, "ise", "Tidak dapat membuat office", err.Error())
 	}
+
+	// Preload company untuk response
+	h.DB.Preload("Company").First(&office, "id = ?", office.ID)
 
 	return utils.RespApi(c, "ok", "Berhasil membuat data office", office)
 }
@@ -173,14 +191,15 @@ func (h *OfficeHandler) UpdateOffice(c *fiber.Ctx) error {
 		"radius_for_checkin":  input.RadiusForCheckin,
 		"radius_for_checkout": input.RadiusForCheckout,
 		"radius_allow":        input.RadiusAllow,
+		"company_id":          input.CompanyID, // bisa null untuk unlink
 	}
 
 	if err := h.DB.Model(&office).Updates(updates).Error; err != nil {
 		return utils.RespApi(c, "ise", "Gagal memperbarui data office", err.Error())
 	}
 
-	// Refresh data
-	if err := h.DB.First(&office, "id = ?", id).Error; err != nil {
+	// Refresh + preload Company
+	if err := h.DB.Preload("Company").First(&office, "id = ?", id).Error; err != nil {
 		return utils.RespApi(c, "ise", "Gagal mendapatkan data office terbaru", err.Error())
 	}
 
@@ -265,7 +284,11 @@ func (h *OfficeHandler) GetOfficeUsers(c *fiber.Ctx) error {
 	}
 
 	var users []models.User
-	if err := h.DB.Where("office_id = ?", officeID).Preload("Role").Find(&users).Error; err != nil {
+	if err := h.DB.Model(&models.User{}).
+		Joins("LEFT JOIN profiles ON profiles.user_id = users.id").
+		Where("users.office_id = ? OR profiles.office_id = ?", officeID, officeID).
+		Preload("Role").
+		Find(&users).Error; err != nil {
 		return utils.RespApi(c, "ise", "Gagal mendapatkan users", err.Error())
 	}
 

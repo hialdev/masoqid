@@ -117,7 +117,25 @@ func (s *AuthService) Login(login, code, purpose string) (string, string, models
 	// bersihkan otp
 	_ = s.DB.Delete(&models.Otp{}, "phone = ? OR email = ?", otp.Phone, otp.Email).Error
 
+	// Populate relations
+	s.populateUserRelations(&user)
+ 
 	return accessToken, refreshToken, user, permissions, nil
+}
+ 
+func (s *AuthService) populateUserRelations(user *models.User) {
+	if user.CompanyID != nil {
+		var company map[string]interface{}
+		if err := s.DB.Table("companies").Where("id = ?", user.CompanyID).First(&company).Error; err == nil {
+			user.Company = company
+		}
+	}
+	if user.OfficeID != nil {
+		var office map[string]interface{}
+		if err := s.DB.Table("offices").Where("id = ?", user.OfficeID).First(&office).Error; err == nil {
+			user.Office = office
+		}
+	}
 }
 
 func (s *AuthService) Register(phone, countryCode, name, username, email string, isEmail bool) (models.User, error) {
@@ -351,9 +369,17 @@ func (s *AuthService) CheckAccessToken(c *fiber.Ctx) (fiber.Map, error) {
 	c.Locals("user_id", claims["user_id"])
 	c.Locals("user", token)
 
+	// Get user data to populate relations
+	var user models.User
+	userID := claims["user_id"].(string)
+	if err := s.DB.Preload("Role").First(&user, "id = ?", userID).Error; err == nil {
+		s.populateUserRelations(&user)
+	}
+ 
 	// ✅ Return data untuk keperluan debugging/frontend
 	return fiber.Map{
-		"user_id": claims["user_id"],
+		"user_id": userID,
+		"user":    user,
 	}, nil
 }
 
@@ -414,12 +440,19 @@ func (s *AuthService) RefreshToken(c *fiber.Ctx) (fiber.Map, error) {
 		return nil, err
 	}
 
+	// Get user data to populate relations
+	var user models.User
+	if err := s.DB.Preload("Role").First(&user, "id = ?", userID).Error; err == nil {
+		s.populateUserRelations(&user)
+	}
+ 
 	// ✅ Generate access token WITHOUT permissions - frontend will fetch via /auth/permissions
 	newAccessToken, _ := generateToken(userID, "access", time.Hour)
 
 	return fiber.Map{
 		"access_token":  newAccessToken,
 		"refresh_token": refreshToken,
+		"user":          user,
 		"user_id":       userID,
 		"permissions":   permissions, // Still return for frontend to update store
 	}, nil

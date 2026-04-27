@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"aldev/modules/auth/models"
 	cmsModels "aldev/modules/cms/models"
 	"aldev/utils"
 	"encoding/csv"
@@ -38,6 +39,18 @@ func (h *AttendanceHandler) ExportAttendance(c *fiber.Ctx) error {
 	query := h.DB.Model(&cmsModels.Attendance{}).
 		Select("attendances.*, users.name as user_name").
 		Joins("LEFT JOIN users ON attendances.user_id = users.id")
+ 
+	// --- Multi-tenancy: Filter by current user's company
+	userIDStrFromCtx, ok := c.Locals("user_id").(string)
+	if ok && userIDStrFromCtx != "" {
+		var currentUser models.User
+		if err := h.DB.Preload("Role").First(&currentUser, "id = ?", userIDStrFromCtx).Error; err == nil {
+			isManager := currentUser.Role.Name == "Company Owner" || currentUser.Role.Name == "Office Manager"
+			if currentUser.RoleID != nil && isManager && currentUser.CompanyID != nil {
+				query = query.Where("users.company_id = ?", currentUser.CompanyID)
+			}
+		}
+	}
 
 	// Apply filters
 	if startDate != "" {

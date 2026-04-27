@@ -72,6 +72,7 @@ func DoACL(requiredPerms ...string) fiber.Handler {
 		}
 
 		// === 6. Jika lolos, lanjut ke handler berikutnya ===
+		c.Locals("user", user)
 		return c.Next()
 	}
 }

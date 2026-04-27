@@ -17,10 +17,12 @@ type User struct {
 	PhoneVerifiedAt *bool      `json:"phone_verified_at,omitempty" validate:"omitempty,boolean"`
 	Image           *string    `json:"image" gorm:"text;omitempty"`
 	RoleID          *uuid.UUID `json:"role_id,omitempty"`
-	OfficeID        *uuid.UUID `json:"office_id,omitempty" gorm:"type:char(36);index"` // ✅ Office assignment (optional)
+	OfficeID        *uuid.UUID `json:"office_id,omitempty" gorm:"type:char(36);index"`
+	CompanyID       *uuid.UUID `json:"company_id,omitempty" gorm:"type:char(36);index"` // ✅ Company assignment
 	DailySalary     *float64   `json:"daily_salary,omitempty" gorm:"type:decimal(15,2);default:null"`
 	HourlySalary    *float64   `json:"hourly_salary,omitempty" gorm:"type:decimal(15,2);default:null"`
 
 	Role   Role        `json:"role,omitempty" gorm:"foreignKey:RoleID;constraint:SET NULL;"`
-	Office interface{} `json:"office,omitempty" gorm:"-"` // ✅ Will be populated manually to avoid circular import
+	Office interface{} `json:"office,omitempty" gorm:"-"` // ✅ Will be populated manually
+	Company interface{} `json:"company,omitempty" gorm:"-"` // ✅ Will be populated manually
 }

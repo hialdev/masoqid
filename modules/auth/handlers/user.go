@@ -71,10 +71,36 @@ func (r *UserHandler) GetUsers(c *fiber.Ctx) error {
 	sort := c.Query("sort", "id")
 	order := c.Query("order", "asc")
 	roleParam := c.Query("role", "")
+	officeID := c.Query("office_id", "")
+	companyID := c.Query("company_id", "")
 
 	offset := (page - 1) * limit
 
 	db := r.DB.Model(&models.User{}).Preload("Role")
+
+	// --- Filter by office_id
+	if officeID != "" {
+		db = db.Where("users.office_id = ?", officeID)
+	}
+
+	// --- Filter by company_id
+	if companyID != "" {
+		db = db.Where("users.company_id = ?", companyID)
+	}
+ 
+	// --- Filter by current user's company (Multi-tenancy)
+	userLocal := c.Locals("user")
+	if userLocal != nil {
+		if u, ok := userLocal.(models.User); ok {
+			// If Company Owner, only show users from their company
+			isManager := u.Role.Name == "Company Owner" || u.Role.Name == "Office Manager"
+			if isManager {
+				if u.CompanyID != nil {
+					db = db.Where("users.company_id = ?", u.CompanyID)
+				}
+			}
+		}
+	}
 
 	// --- Filter by role name
 	if roleParam != "" {
@@ -123,7 +149,8 @@ func (r *UserHandler) GetUsers(c *fiber.Ctx) error {
 	totalPages := (total + int64(limit) - 1) / int64(limit)
 
 	result := fiber.Map{
-		"users": users,
+		"data":  users,
+		"total": total,
 		"pagination": fiber.Map{
 			"total":      total,
 			"page":       page,
@@ -132,7 +159,7 @@ func (r *UserHandler) GetUsers(c *fiber.Ctx) error {
 		},
 	}
 
-	return utils.RespApi(c, "ok", "Berhasil ambil data users", result)
+	return utils.RespApi(c, "ok", "Data User", result)
 }
 
 func (r *UserHandler) GetUser(c *fiber.Ctx) error {
@@ -184,6 +211,16 @@ func (h *UserHandler) Create(c *fiber.Ctx) error {
 	newUser := models.User{
 		Name:     &input.Name,
 		Username: &input.Username,
+	}
+ 
+	// Multi-tenant: assign company_id from creator if they are Company Owner
+	userLocal := c.Locals("user")
+	if userLocal != nil {
+		if u, ok := userLocal.(models.User); ok {
+			if u.Role.Name == "Company Owner" && u.CompanyID != nil {
+				newUser.CompanyID = u.CompanyID
+			}
+		}
 	}
 
 	if input.Phone != "" {
@@ -263,6 +300,18 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	}
 
 	updUser := make(map[string]interface{})
+ 
+	// Multi-tenant protection: Company Owner can only update users in their company
+	userLocal := c.Locals("user")
+	if userLocal != nil {
+		if u, ok := userLocal.(models.User); ok {
+			if u.Role.Name == "Company Owner" {
+				if user.CompanyID == nil || *user.CompanyID != *u.CompanyID {
+					return utils.RespApi(c, "fbd", "Akses ditolak: User bukan milik perusahaan Anda", nil)
+				}
+			}
+		}
+	}
 
 	// --- Update Name ---
 	if input.Name != "" && (user.Name == nil || input.Name != *user.Name) {
