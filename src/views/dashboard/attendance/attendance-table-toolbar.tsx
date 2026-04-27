@@ -16,6 +16,7 @@ type Props = {
    typeOptions: string[];
    statusOptions: string[];
    employeeOptions?: { id: string; name: string }[];
+   officeOptions?: { id: string; name: string }[];
 };
 
 export default function AttendanceTableToolbar({
@@ -25,6 +26,7 @@ export default function AttendanceTableToolbar({
    typeOptions,
    statusOptions,
    employeeOptions = [],
+   officeOptions = [],
 }: Props) {
    const handleFilterStartDate = useCallback(
       (newValue: any) => {
@@ -60,7 +62,12 @@ export default function AttendanceTableToolbar({
       },
       [onFilters]
    );
-
+   const handleFilterOffices = useCallback(
+      (event: any, newValue: { id: string; name: string }[]) => {
+         onFilters('office_ids', newValue.map((item) => item.id).join(','));
+      },
+      [onFilters]
+   );
    return (
       <Stack
          spacing={2}
@@ -69,6 +76,27 @@ export default function AttendanceTableToolbar({
          sx={{ p: 2.5 }}
       >
          <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+            {officeOptions.length > 0 && (
+               <Autocomplete
+                  multiple
+                  fullWidth
+                  options={officeOptions}
+                  getOptionLabel={(option) => option.name}
+                  value={officeOptions.filter((option) =>
+                     filters.office_ids?.split(',').includes(option.id)
+                  )}
+                  onChange={handleFilterOffices}
+                  renderInput={(params) => <TextField {...params} label="Offices" />}
+                  renderOption={(props, option, { selected }) => (
+                     <li {...props} key={option.id}>
+                        <Checkbox key={option.id} size="small" checked={selected} />
+                        {option.name}
+                     </li>
+                  )}
+                  limitTags={1}
+                  disableCloseOnSelect
+               />
+            )}
             {employeeOptions.length > 0 && (
                <Autocomplete
                   multiple

@@ -6,7 +6,7 @@ import { persist } from 'zustand/middleware';
 import { protectedApi } from 'src/lib/al/axios';
 
 export interface UserData {
-   id: string;
+   id?: string;
    username?: string;
    country_code?: string;
    image?: string | File;
@@ -14,6 +14,11 @@ export interface UserData {
    phone?: string | number;
    name?: string;
    role_id?: string | null;
+   company_id?: string | null;
+   office_id?: string | null;
+   company?: any;
+   office?: any;
+   password?: string;
 
    role?: RoleData;
 }
@@ -21,19 +26,15 @@ export interface UserData {
 interface UserState {
    users: UserData | null;
 
-   all: ({
-      page,
-      limit,
-      search,
-      sort,
-      order,
-   }: {
+   all: (params: {
       page?: number | string;
       limit?: number | string;
       role?: string;
       search?: string;
-      sort: string;
-      order: 'desc' | 'asc';
+      sort?: string;
+      order?: 'desc' | 'asc';
+      office_id?: string;
+      company_id?: string;
    }) => Promise<any>;
    add: (data: UserData) => Promise<any>;
    detail: ({ id }: { id: string }) => Promise<any>;
@@ -47,9 +48,8 @@ const useUserStore = create<UserState>()(
    persist(
       (set, get) => ({
          users: null,
-         all: async ({ page, limit, search, role, sort, order }) => {
+         all: async (params) => {
             try {
-               const params = { page, limit, role, search, sort, order };
                const response = await protectedApi.get('/users', { params });
                set({ users: response.data });
                return response.data;

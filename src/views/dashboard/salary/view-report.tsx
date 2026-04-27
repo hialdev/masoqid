@@ -14,6 +14,8 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
+import Autocomplete from '@mui/material/Autocomplete';
+import Checkbox from '@mui/material/Checkbox';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
@@ -22,6 +24,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { paths } from 'src/routes/al/paths';
 
 import useSalaryStore from 'src/stores/salary';
+import useOfficeStore from 'src/stores/office';
 
 // ----------------------------------------------------------------------
 
@@ -37,22 +40,29 @@ function formatRupiah(amount: number): string {
 
 export function SalaryReportView() {
   const { report, getSalaryReport, exportSalaryReport } = useSalaryStore();
+  const { getAll: getOffices } = useOfficeStore();
 
   const today = new Date();
   const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
   const [month, setMonth] = useState(defaultMonth);
+  const [officeIds, setOfficeIds] = useState<string[]>([]);
+  const [offices, setOffices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState<'xlsx' | 'csv' | null>(null);
+
+  useEffect(() => {
+    getOffices({ limit: 100 }).then(setOffices);
+  }, [getOffices]);
 
   const fetchReport = useCallback(async () => {
     setLoading(true);
     try {
-      await getSalaryReport({ month });
+      await getSalaryReport({ month, office_ids: officeIds.join(',') });
     } finally {
       setLoading(false);
     }
-  }, [month, getSalaryReport]);
+  }, [month, officeIds, getSalaryReport]);
 
   useEffect(() => {
     fetchReport();
@@ -61,7 +71,7 @@ export function SalaryReportView() {
   const handleExport = async (format: 'xlsx' | 'csv') => {
     setExporting(format);
     try {
-      await exportSalaryReport({ month, format });
+      await exportSalaryReport({ month, format, office_ids: officeIds.join(',') });
     } finally {
       setExporting(null);
     }
@@ -139,7 +149,27 @@ export function SalaryReportView() {
             onChange={(e) => setMonth(e.target.value)}
             size="small"
             slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ width: 200 }}
           />
+ 
+          <Autocomplete
+            multiple
+            size="small"
+            options={offices}
+            getOptionLabel={(option) => option.name}
+            value={offices.filter((option) => officeIds.includes(option.id))}
+            onChange={(_, newValue) => setOfficeIds(newValue.map((v) => v.id))}
+            renderInput={(params) => <TextField {...params} label="Pilih Office" />}
+            renderOption={(props, option, { selected }) => (
+              <li {...props} key={option.id}>
+                <Checkbox key={option.id} size="small" checked={selected} />
+                {option.name}
+              </li>
+            )}
+            sx={{ width: 300 }}
+            disableCloseOnSelect
+          />
+ 
           {loading && <CircularProgress size={20} />}
         </Stack>
 

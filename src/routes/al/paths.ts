@@ -103,6 +103,7 @@ export const paths = {
          new: `${ROOTS.DASHBOARD}/users/new`,
          list: `${ROOTS.DASHBOARD}/users/list`,
          access: `${ROOTS.DASHBOARD}/users/access`,
+         officeManagers: `${ROOTS.DASHBOARD}/users/office-managers`,
       },
       whatsapp: `${ROOTS.DASHBOARD}/whatsapp`,
       // Attendance
@@ -117,6 +118,8 @@ export const paths = {
          root: `${ROOTS.DASHBOARD}/shift`,
          calendar: `${ROOTS.DASHBOARD}/shift/calendar`,
          my: `${ROOTS.DASHBOARD}/my-shift`,
+         bulk: `${ROOTS.DASHBOARD}/shift/bulk`,
+         switchRequests: `${ROOTS.DASHBOARD}/shift/switch-requests`,
       },
       // Salary
       salary: {
@@ -128,6 +131,18 @@ export const paths = {
          root: `${ROOTS.DASHBOARD}/offices`,
          create: `${ROOTS.DASHBOARD}/offices/create`,
          edit: (id: string) => `${ROOTS.DASHBOARD}/offices/${id}/edit`,
+      },
+      // Employee Profiles
+      employee: {
+         root: `${ROOTS.DASHBOARD}/employees`,
+         create: `${ROOTS.DASHBOARD}/employees/create`,
+         edit: (id: string) => `${ROOTS.DASHBOARD}/employees/${id}/edit`,
+      },
+      // Company (Super Admin Only)
+      company: {
+         root: `${ROOTS.DASHBOARD}/company`,
+         create: `${ROOTS.DASHBOARD}/company/create`,
+         edit: (id: string) => `${ROOTS.DASHBOARD}/company/${id}/edit`,
       },
       crud: {
          root: `${ROOTS.DASHBOARD}/crud`,

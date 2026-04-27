@@ -8,27 +8,8 @@ import { Iconify } from 'src/components/iconify';
 
 const icon = (name: string) => <Iconify icon={name} />;
 
-// ----------------------------------------------------------------------
-
-/**
- * Input nav data is an array of navigation section items used to define the structure and content of a navigation bar.
- * Each section contains a subheader and an array of items, which can include nested children items.
- *
- * Each item can have the following properties:
- * - `title`: The title of the navigation item.
- * - `path`: The URL path the item links to.
- * - `icon`: An optional icon component to display alongside the title.
- * - `info`: Optional additional information to display, such as a label.
- * - `allowedRoles`: An optional array of roles that are allowed to see the item.
- * - `caption`: An optional caption to display below the title.
- * - `children`: An optional array of nested navigation items.
- * - `disabled`: An optional boolean to disable the item.
- * - `deepMatch`: An optional boolean to indicate if the item should match subpaths.
- */
-export const navData: NavSectionProps['data'] = [
-   /**
-    * Overview
-    */
+// ── Super Admin ───────────────────────────────────────────────────────────────
+const navSuperAdmin: NavSectionProps['data'] = [
    {
       subheader: 'Overview',
       items: [
@@ -39,86 +20,14 @@ export const navData: NavSectionProps['data'] = [
          },
       ],
    },
-   /**
-    * Attendance
-    */
-   {
-      subheader: 'Attendance System',
-      items: [
-         {
-            title: 'My Attendance',
-            path: paths.dashboard.my_attendance.root,
-            icon: icon('solar:user-hand-up-bold-duotone'),
-         },
-         {
-            title: 'Attendance Report',
-            path: paths.dashboard.attendance,
-            icon: icon('solar:clipboard-list-bold-duotone'),
-            // In real app, restrict this to 'manager' role
-            // allowedRoles: ['manager', 'admin'],
-         },
-         {
-            title: 'Offices',
-            path: paths.dashboard.office.root,
-            icon: icon('solar:buildings-2-bold-duotone'),
-         },
-      ],
-   },
-   /**
-    * Shift Management
-    */
-   {
-      subheader: 'Shift Management',
-      items: [
-         {
-            title: 'Shift Calendar',
-            path: paths.dashboard.shift.calendar,
-            icon: icon('solar:calendar-bold-duotone'),
-         },
-         {
-            title: 'Manage Shift',
-            path: paths.dashboard.shift.root,
-            icon: icon('solar:calendar-add-bold-duotone'),
-         },
-         {
-            title: 'My Shifts',
-            path: paths.dashboard.shift.my,
-            icon: icon('solar:user-check-rounded-bold-duotone'),
-         },
-      ],
-   },
-   // /**
-   //  * CRUD Management
-   //  */
-   // {
-   //    subheader: 'Content Management',
-   //    items: [
-   //       {
-   //          title: 'Example Rich',
-   //          path: paths.dashboard.example_rich.root,
-   //          icon: icon('solar:calendar-add-bold-duotone'),
-   //          children: [
-   //             { title: 'Lists', path: paths.dashboard.example_rich.root },
-   //             { title: 'Create', path: paths.dashboard.example_rich.create },
-   //          ],
-   //       },
-   //    ],
-   // },
-   /**
-    * Management
-    */
    {
       subheader: 'Core Settings',
       items: [
-         // {
-         //    title: 'Dataset Generator',
-         //    path: paths.dashboard.crud.root,
-         //    icon: icon('solar:database-bold-duotone'),
-         //    children: [
-         //       { title: 'List', path: paths.dashboard.crud.root },
-         //       { title: 'Create', path: paths.dashboard.crud.new },
-         //    ],
-         // },
+         {
+            title: 'Company',
+            path: paths.dashboard.company.root,
+            icon: icon('solar:buildings-bold-duotone'),
+         },
          {
             title: 'User Access',
             path: paths.dashboard.users.root,
@@ -141,3 +50,213 @@ export const navData: NavSectionProps['data'] = [
       ],
    },
 ];
+
+// ── Company Owner ─────────────────────────────────────────────────────────────
+const navCompanyOwner: NavSectionProps['data'] = [
+   {
+      subheader: 'Overview',
+      items: [
+         {
+            title: 'Dashboard',
+            path: paths.dashboard.root,
+            icon: icon('solar:widget-5-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Workforce',
+      items: [
+         {
+            title: 'Offices',
+            path: paths.dashboard.office.root,
+            icon: icon('solar:buildings-2-bold-duotone'),
+         },
+         {
+            title: 'Employees',
+            path: paths.dashboard.employee.root,
+            icon: icon('solar:users-group-two-rounded-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Time Management',
+      items: [
+         {
+            title: 'Shift Calendar',
+            path: paths.dashboard.shift.calendar,
+            icon: icon('solar:calendar-bold-duotone'),
+         },
+         {
+            title: 'Manage Shift',
+            path: paths.dashboard.shift.root,
+            icon: icon('solar:calendar-add-bold-duotone'),
+         },
+         {
+            title: 'Bulk Shift',
+            path: paths.dashboard.shift.bulk,
+            icon: icon('solar:calendar-mark-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Reports',
+      items: [
+         {
+            title: 'Attendance Report',
+            path: paths.dashboard.attendance,
+            icon: icon('solar:clipboard-list-bold-duotone'),
+         },
+         {
+            title: 'Salary Report',
+            path: paths.dashboard.salary.report,
+            icon: icon('solar:wallet-money-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Administration',
+      items: [
+         {
+            title: 'Office Managers',
+            path: paths.dashboard.users.officeManagers,
+            icon: icon('solar:user-id-bold-duotone'),
+         },
+      ],
+   },
+];
+
+// ── Office Manager ────────────────────────────────────────────────────────────
+const navOfficeManager: NavSectionProps['data'] = [
+   {
+      subheader: 'Overview',
+      items: [
+         {
+            title: 'Dashboard',
+            path: paths.dashboard.root,
+            icon: icon('solar:widget-5-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Workforce',
+      items: [
+         {
+            title: 'Offices',
+            path: paths.dashboard.office.root,
+            icon: icon('solar:buildings-2-bold-duotone'),
+         },
+         {
+            title: 'Employees',
+            path: paths.dashboard.employee.root,
+            icon: icon('solar:users-group-two-rounded-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Time Management',
+      items: [
+         {
+            title: 'Shift Calendar',
+            path: paths.dashboard.shift.calendar,
+            icon: icon('solar:calendar-bold-duotone'),
+         },
+         {
+            title: 'Manage Shift',
+            path: paths.dashboard.shift.root,
+            icon: icon('solar:calendar-add-bold-duotone'),
+         },
+         {
+            title: 'Bulk Shift',
+            path: paths.dashboard.shift.bulk,
+            icon: icon('solar:calendar-mark-bold-duotone'),
+         },
+         {
+            title: 'Switch Requests',
+            path: paths.dashboard.shift.switchRequests,
+            icon: icon('solar:refresh-circle-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Reports',
+      items: [
+         {
+            title: 'Attendance Report',
+            path: paths.dashboard.attendance,
+            icon: icon('solar:clipboard-list-bold-duotone'),
+         },
+         {
+            title: 'Salary Report',
+            path: paths.dashboard.salary.report,
+            icon: icon('solar:wallet-money-bold-duotone'),
+         },
+      ],
+   },
+];
+
+// ── Karyawan / Employee ───────────────────────────────────────────────────────
+const navEmployee: NavSectionProps['data'] = [
+   {
+      subheader: 'Overview',
+      items: [
+         {
+            title: 'Dashboard',
+            path: paths.dashboard.root,
+            icon: icon('solar:widget-5-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Attendance',
+      items: [
+         {
+            title: 'My Attendance',
+            path: paths.dashboard.my_attendance.root,
+            icon: icon('solar:user-hand-up-bold-duotone'),
+            children: [
+               { title: 'Check In', path: paths.dashboard.my_attendance.check_in },
+               { title: 'Check Out', path: paths.dashboard.my_attendance.check_out },
+            ],
+         },
+      ],
+   },
+   {
+      subheader: 'Schedule',
+      items: [
+         {
+            title: 'My Shifts',
+            path: paths.dashboard.shift.my,
+            icon: icon('solar:user-check-rounded-bold-duotone'),
+         },
+      ],
+   },
+   {
+      subheader: 'Request',
+      items: [
+         {
+            title: 'Switch Shift',
+            path: paths.dashboard.shift.switchRequests,
+            icon: icon('solar:refresh-circle-bold-duotone'),
+         },
+      ],
+   },
+];
+
+// ── Selector function ─────────────────────────────────────────────────────────
+export function getNavDataByRole(roleName: string | null): NavSectionProps['data'] {
+   switch (roleName) {
+      case 'Super Admin':
+         return navSuperAdmin;
+      case 'Company Owner':
+         return navCompanyOwner;
+      case 'Office Manager':
+         return navOfficeManager;
+      case 'Karyawan':
+         return navEmployee;
+      default:
+         return navEmployee; // fallback aman
+   }
+}
+
+// Backward-compat export (digunakan layout saat role belum diketahui)
+export const navData: NavSectionProps['data'] = navEmployee;

@@ -18,6 +18,10 @@ interface UserData {
    name?: string;
    image?: string;
    role?: RoleData | null;
+   company_id?: string | null;
+   office_id?: string | null;
+   company?: any;
+   office?: any;
 }
 
 interface AuthState {
@@ -194,38 +198,33 @@ const useAuthStore = create<AuthState>()(
          },
 
          logout: async () => {
+            // ─── Bersihkan state lokal terlebih dahulu ──────────────────────────
+            set({
+               authData: {
+                  userId: null,
+                  permissions: null,
+               },
+               registData: undefined,
+               user: null,
+               isLoggedOut: true,
+            });
+
             try {
-               const res = await protectedApi.post(`/auth/logout`);
-
-               set({
-                  authData: {
-                     userId: null,
-                     permissions: null,
-                  },
-                  registData: undefined,
-                  user: null,
-                  isLoggedOut: true,
-               });
-
-               return res.data;
+               // Panggil API logout (Next.js route handler yang akan handle cookie)
+               await protectedApi.post(`/auth/logout`);
             } catch (err) {
                console.warn(
-                  'Logout gagal (server error), tapi local state sudah dibersihkan:',
+                  '[Auth] Logout server call gagal, tapi local state sudah dibersihkan:',
                   err
                );
-
-               set({
-                  authData: {
-                     userId: null,
-                     permissions: null,
-                  },
-                  registData: undefined,
-                  user: null,
-                  isLoggedOut: true,
-               });
-               const msg = 'Logout failed, forced local logout';
-               return { success: false, error: msg, message: msg };
             }
+
+            // ─── Force full page reload untuk clear SSR cache + cookie di browser ─
+            if (typeof window !== 'undefined') {
+               window.location.href = '/auth/sign-in?from=refresh-failed';
+            }
+
+            return { success: true };
          },
 
          refreshToken: async () => {
@@ -234,17 +233,29 @@ const useAuthStore = create<AuthState>()(
                   withCredentials: true,
                });
 
-               // ✅ Update permissions from refresh response (backend still returns for convenience)
+               // ─── Update permissions dari response refresh ──────────────────
                set((state) => ({
                   authData: {
                      ...state.authData,
                      permissions: res.data.data?.permissions || state.authData.permissions,
                   },
+                  user: res.data.data?.user || state.user,
                   isLoggedOut: false,
                }));
             } catch (err) {
-               console.error('Token refresh failed:', err);
-               get().logout();
+               console.error('[Auth] Token refresh failed:', err);
+               // ─── Jangan panggil get().logout() langsung karena itu akan ──────
+               // ─── mengirim request baru yang mungkin juga gagal → bersihkan ──
+               // ─── state saja, biarkan interceptor/guard handle redirect ───────
+               set({
+                  authData: { userId: null, permissions: null },
+                  user: null,
+                  isLoggedOut: true,
+               });
+               // Force redirect ke sign-in dengan flag
+               if (typeof window !== 'undefined') {
+                  window.location.href = '/auth/sign-in?from=refresh-failed';
+               }
             }
          },
       }),

@@ -40,28 +40,34 @@ export function ShiftSwitchDialog({
   allShifts,
 }: ShiftSwitchDialogProps) {
   const { switchShifts } = useShiftStore();
+  const [shiftAId, setShiftAId] = useState('');
   const [shiftBId, setShiftBId] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Reset saat dialog dibuka
   useEffect(() => {
-    if (open) setShiftBId('');
-  }, [open]);
+    if (open) {
+      setShiftAId(shiftA?.id || '');
+      setShiftBId('');
+    }
+  }, [open, shiftA]);
 
-  // Opsi shiftB: semua shift kecuali shiftA
-  const shiftBOptions = allShifts.filter((s) => s.id !== shiftA?.id);
-
+  // Opsi shiftA & shiftB
+  const selectedShiftA = allShifts.find((s) => s.id === shiftAId) ?? null;
   const selectedShiftB = allShifts.find((s) => s.id === shiftBId) ?? null;
 
+  const shiftAOptions = allShifts;
+  const shiftBOptions = allShifts.filter((s) => s.id !== shiftAId);
+
   const handleSwitch = async () => {
-    if (!shiftA || !shiftBId) {
-      toast.error('Pilih shift tujuan terlebih dahulu');
+    if (!shiftAId || !shiftBId) {
+      toast.error('Pilih kedua shift terlebih dahulu');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await switchShifts(shiftA.id, shiftBId);
+      const res = await switchShifts(shiftAId, shiftBId);
       if (res?.success) {
         toast.success('Shift berhasil ditukar!');
         onSuccess();
@@ -123,14 +129,41 @@ export function ShiftSwitchDialog({
 
           {/* Preview dua shift */}
           <Stack direction="row" spacing={1.5} alignItems="stretch">
-            <ShiftCard shift={shiftA} label="Shift A (terpilih)" />
+            <ShiftCard shift={selectedShiftA} label="Shift A (Sumber)" />
 
             <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5 }}>
               <Iconify icon="solar:transfer-horizontal-bold" width={24} color="text.disabled" />
             </Box>
 
-            <ShiftCard shift={selectedShiftB} label="Shift B (tujuan)" />
+            <ShiftCard shift={selectedShiftB} label="Shift B (Tujuan)" />
           </Stack>
+
+          {/* Pilih Shift A (Hanya jika belum ada shiftA awal) */}
+          {!shiftA && (
+            <TextField
+              select
+              label="Pilih Shift A (Sumber)"
+              value={shiftAId}
+              onChange={(e) => {
+                setShiftAId(e.target.value);
+                if (e.target.value === shiftBId) setShiftBId('');
+              }}
+              fullWidth
+              required
+            >
+              {shiftAOptions.map((s) => {
+                const userName =
+                  typeof s.user === 'object' && s.user
+                    ? (s.user as any).name ?? 'Unknown'
+                    : 'Unknown';
+                return (
+                  <MenuItem key={s.id} value={s.id}>
+                    {`${fShiftDate(s.date, false)} · ${s.start_time}–${s.end_time} · ${userName}`}
+                  </MenuItem>
+                );
+              })}
+            </TextField>
+          )}
 
           {/* Pilih Shift B */}
           <TextField

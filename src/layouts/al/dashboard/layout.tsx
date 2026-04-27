@@ -32,7 +32,8 @@ import { MenuButton } from '../../components/menu-button';
 import { AccountDrawer } from '../../components/account-drawer';
 import { SettingsButton } from '../../components/settings-button';
 import { NavProfileBottom } from './components/nav-profile-bottom';
-import { navData as dashboardNavData } from '../nav-config-dashboard';
+import { navData as fallbackNavData, getNavDataByRole } from '../nav-config-dashboard';
+import { useCurrentRole } from 'src/hooks/use-current-role';
 import { NotificationsDrawer } from '../../components/notifications-drawer';
 import { MainSection, layoutClasses, HeaderSection, LayoutSection } from '../../core';
 
@@ -69,7 +70,8 @@ export function DashboardLayout({
    
    const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
    
-   const navData = slotProps?.nav?.data || dashboardNavData;
+   const role = useCurrentRole();
+   const navData = slotProps?.nav?.data || getNavDataByRole(role);
    
    const isNavMini = settings.state.navLayout === 'mini';
    const isNavHorizontal = settings.state.navLayout === 'horizontal';

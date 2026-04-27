@@ -1,26 +1,52 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-export async function POST(req: NextRequest) {
-   try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-         method: 'POST',
-         credentials: 'include', // ← kirim cookie ke backend
-         cache: 'no-store',
-      });
+export async function POST(_req: NextRequest) {
+  try {
+    // ─── Ambil refreshToken dari cookie dan kirim secara manual ke backend ────
+    // NOTE: `credentials: 'include'` tidak berfungsi di server-side Node.js fetch.
+    //       Cookie harus dikirim secara eksplisit via header Cookie.
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get('refreshToken')?.value;
+    const accessToken = cookieStore.get('accessToken')?.value;
 
-      if (!res.ok) {
-         console.error('Logout gagal di backend');
-      }
+    const cookieHeader = [
+      refreshToken ? `refreshToken=${refreshToken}` : null,
+      accessToken ? `accessToken=${accessToken}` : null,
+    ]
+      .filter(Boolean)
+      .join('; ');
 
-      const response = NextResponse.json({ success: true });
-      response.cookies.delete('accessToken');
-      response.cookies.delete('refreshToken');
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: 'no-store',
+    });
 
-      return response;
-   } catch (error) {
-      console.error('Error logout:', error);
-      return NextResponse.json({ success: false }, { status: 500 });
-   }
+    if (!res.ok) {
+      console.error('[Logout] Backend logout gagal, status:', res.status);
+      // Tetap lanjutkan hapus cookie lokal meskipun backend gagal
+    }
+
+    // ─── Hapus semua auth cookie ──────────────────────────────────────────────
+    const response = NextResponse.json({ success: true });
+    response.cookies.delete('accessToken');
+    response.cookies.delete('refreshToken');
+
+    return response;
+  } catch (error) {
+    console.error('[Logout] Error:', error);
+
+    // Tetap hapus cookie lokal meskipun error
+    const response = NextResponse.json({ success: false }, { status: 200 });
+    response.cookies.delete('accessToken');
+    response.cookies.delete('refreshToken');
+
+    return response;
+  }
 }

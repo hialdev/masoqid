@@ -46,6 +46,7 @@ import { OfficeTableRow } from '../components/office-table-row';
 
 const TABLE_HEAD: TableHeadCellProps[] = [
    { id: 'name', label: 'Office Name' },
+   { id: 'company', label: 'Company', width: 160 },
    { id: 'address', label: 'Address' },
    { id: 'user_count', label: 'Employees', width: 120 },
    { id: 'is_strict_radius', label: 'Strict Radius', width: 140 },

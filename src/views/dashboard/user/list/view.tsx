@@ -94,7 +94,7 @@ export function UserListView() {
       const res = await all(params);
 
       if (res.success) {
-         const { pagination: pgnt, users } = res.data;
+         const { pagination: pgnt, data: users } = res.data;
          setTableData(users || []);
          setPagination({
             page: pgnt.page,
@@ -283,7 +283,7 @@ export function UserListView() {
                         onSelectAllRows={(checked) =>
                            table.onSelectAllRows(
                               checked,
-                              dataFiltered.map((row) => row.id)
+                              dataFiltered.map((row) => row?.id || '')
                            )
                         }
                         action={
@@ -307,7 +307,7 @@ export function UserListView() {
                               onSelectAllRows={(checked) =>
                                  table.onSelectAllRows(
                                     checked,
-                                    dataFiltered.map((row) => row.id)
+                                    dataFiltered.map((row) => row?.id || '')
                                  )
                               }
                            />
@@ -318,10 +318,10 @@ export function UserListView() {
                                     onSuccessEdit={() => fetchData()}
                                     key={row.id}
                                     row={row}
-                                    selected={table.selected.includes(row.id)}
-                                    onSelectRow={() => table.onSelectRow(row.id)}
-                                    onDeleteRow={() => handleDeleteRow(row.id)}
-                                    editHref={paths.dashboard.user.edit(row.id)}
+                                    selected={table.selected.includes(row?.id || '')}
+                                    onSelectRow={() => table.onSelectRow(row?.id || '')}
+                                    onDeleteRow={() => handleDeleteRow(row?.id || '')}
+                                    editHref={paths.dashboard.user.edit(row?.id || '')}
                                  />
                               ))}
 

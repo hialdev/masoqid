@@ -13,6 +13,8 @@ export interface OfficeData {
    radius_for_checkin: boolean;
    radius_for_checkout: boolean;
    radius_allow: number;
+   company_id?: string | null;
+   company?: { id: string; name: string; logo?: string } | null;
    users?: any[];
    user_count?: number;
    created_at?: string;

@@ -41,7 +41,7 @@ export function AssignUsersModal({ office, open, onClose, onSuccess }: Props) {
 
    const fetchUsers = async () => {
       try {
-         const res = await getAllUsers({ page: 1, limit: 1000 });
+         const res = await getAllUsers({ page: 1, limit: 1000, sort: 'created_at', order: 'desc' });
          if (res.success) {
             setUsers(res.data.users || []);
 

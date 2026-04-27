@@ -165,6 +165,19 @@ export function OfficeTableRow({ row, selected, onSelectRow, onDeleteRow, onSucc
             </TableCell>
 
             <TableCell>
+               {row.company ? (
+                  <Chip
+                     label={row.company.name}
+                     size="small"
+                     color="secondary"
+                     variant="soft"
+                  />
+               ) : (
+                  <Typography variant="caption" color="text.disabled">—</Typography>
+               )}
+            </TableCell>
+
+            <TableCell>
                <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
                   {row.address}
                </Typography>

@@ -50,6 +50,7 @@ export function AttendanceListView() {
       type: 'all',
       status: 'all',
       user_ids: '',
+      office_ids: '',
    });
 
    // Fetch users and offices
@@ -92,6 +93,7 @@ export function AttendanceListView() {
       if (filters.type !== 'all') params.type = filters.type;
       if (filters.status !== 'all') params.status = filters.status;
       if (filters.user_ids) params.user_ids = filters.user_ids;
+      if (filters.office_ids) params.office_ids = filters.office_ids;
 
       getAllAttendance(params);
    }, [getAllAttendance, filters]);
@@ -125,6 +127,7 @@ export function AttendanceListView() {
                typeOptions={['CHECK_IN', 'CHECK_OUT']}
                statusOptions={['VALID', 'SUSPICIOUS', 'INVALID']}
                employeeOptions={employeeOptions}
+               officeOptions={officeOptions}
             />
 
             <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>

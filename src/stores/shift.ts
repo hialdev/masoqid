@@ -48,6 +48,8 @@ interface ShiftState {
   updateShift: (id: string, data: Partial<ShiftInput>) => Promise<any>;
   deleteShift: (id: string) => Promise<any>;
   switchShifts: (shiftAId: string, shiftBId: string) => Promise<any>;
+  bulkCreateShifts: (shifts: ShiftInput[]) => Promise<any>;
+  bulkDeleteShifts: (shiftIds: string[]) => Promise<any>;
 }
 
 // ----------------------------------------------------------------------
@@ -118,6 +120,17 @@ const useShiftStore = create<ShiftState>()(
           shift_a_id: shiftAId,
           shift_b_id: shiftBId,
         });
+        return response.data;
+      },
+
+      bulkCreateShifts: async (shifts) => {
+        const response = await protectedApi.post('/shifts/bulk', { shifts });
+        return response.data;
+      },
+
+      bulkDeleteShifts: async (shiftIds) => {
+        // Axios delete body dikirim di "data"
+        const response = await protectedApi.delete('/shifts/bulk', { data: { shift_ids: shiftIds } });
         return response.data;
       },
     }),

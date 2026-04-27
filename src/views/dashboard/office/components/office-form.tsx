@@ -12,17 +12,24 @@ import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { paths } from 'src/routes/al/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import useOfficeStore from 'src/stores/office';
+import useCompanyStore from 'src/stores/company';
+import useAuthStore from 'src/stores/auth';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { toast } from 'src/components/snackbar';
 import { Form, Field } from 'src/components/hook-form';
+import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 // ----------------------------------------------------------------------
@@ -48,6 +55,7 @@ export const OfficeSchema = zod.object({
       .number()
       .min(1, 'Radius must be at least 1 meter')
       .max(10000, 'Radius cannot exceed 10000 meters'),
+   company_id: zod.string().nullable().optional(),
 });
 
 // ----------------------------------------------------------------------
@@ -59,7 +67,11 @@ type Props = {
 export function OfficeForm({ currentOffice }: Props) {
    const router = useRouter();
    const { create, update } = useOfficeStore();
+   const { companies, getAll: getAllCompanies, loading: companiesLoading } = useCompanyStore();
+   const { user } = useAuthStore();
    const [loading, setLoading] = useState(false);
+ 
+   const isCompanyOwner = user?.role?.name === 'Company Owner';
 
    const defaultValues: OfficeSchemaType = {
       name: currentOffice?.name || '',
@@ -71,10 +83,11 @@ export function OfficeForm({ currentOffice }: Props) {
       radius_for_checkin: currentOffice?.radius_for_checkin || false,
       radius_for_checkout: currentOffice?.radius_for_checkout || false,
       radius_allow: currentOffice?.radius_allow || 100,
+      company_id: currentOffice?.company_id || (isCompanyOwner ? user?.company_id : null),
    };
 
    const methods = useForm<OfficeSchemaType>({
-      resolver: zodResolver(OfficeSchema),
+      resolver: zodResolver(OfficeSchema) as any,
       defaultValues,
    });
 
@@ -83,10 +96,26 @@ export function OfficeForm({ currentOffice }: Props) {
       watch,
       setValue,
       handleSubmit,
-      formState: { isSubmitting },
+      register,
+      formState: { isSubmitting, errors },
    } = methods;
+ 
+   useEffect(() => {
+      if (isCompanyOwner && user?.company_id && !currentOffice) {
+         reset({
+            ...defaultValues,
+            company_id: user.company_id,
+         });
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [isCompanyOwner, user?.company_id, reset, currentOffice]);
 
    const values = watch();
+
+   // Load companies for selector
+   useEffect(() => {
+      getAllCompanies({ limit: 100 });
+   }, []);
 
    useEffect(() => {
       if (currentOffice) {
@@ -98,14 +127,20 @@ export function OfficeForm({ currentOffice }: Props) {
       try {
          setLoading(true);
 
+         // Transform: send null when empty string
+         const payload = {
+            ...data,
+            company_id: data.company_id || null,
+         };
+
          if (currentOffice) {
-            const result = await update(currentOffice.id, data);
+            const result = await update(currentOffice.id, payload);
             if (result.success) {
                toast.success(result.message || 'Office updated successfully');
                router.push(paths.dashboard.office.root);
             }
          } else {
-            const result = await create(data);
+            const result = await create(payload);
             if (result.success) {
                toast.success(result.message || 'Office created successfully');
                router.push(paths.dashboard.office.root);
@@ -134,6 +169,51 @@ export function OfficeForm({ currentOffice }: Props) {
       </Card>
    );
 
+   const renderCompany = (
+      <Card sx={{ p: 3 }}>
+         <Typography variant="h6" sx={{ mb: 1 }}>
+            Company
+         </Typography>
+         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Hubungkan office ini ke company
+         </Typography>
+
+         <TextField
+            select
+            fullWidth
+            label="Pilih Company"
+            value={values.company_id || ''}
+            onChange={(e) => setValue('company_id', e.target.value || null)}
+            disabled={companiesLoading}
+            InputProps={{
+               startAdornment: companiesLoading ? (
+                  <InputAdornment position="start">
+                     <CircularProgress size={16} />
+                  </InputAdornment>
+               ) : (
+                  <InputAdornment position="start">
+                     <Iconify icon="solar:buildings-bold-duotone" width={18} />
+                  </InputAdornment>
+               ),
+            }}
+            helperText={
+               currentOffice?.company
+                  ? `Saat ini: ${currentOffice.company.name}`
+                  : 'Opsional — kosongkan jika belum ada company'
+            }
+         >
+            <MenuItem value="">
+               <em>— Tidak ada company —</em>
+            </MenuItem>
+            {companies.map((c) => (
+               <MenuItem key={c.id} value={c.id}>
+                  {c.name}
+               </MenuItem>
+            ))}
+         </TextField>
+      </Card>
+   );
+
    const renderLocation = (
       <Card sx={{ p: 3 }}>
          <Typography variant="h6" sx={{ mb: 3 }}>
@@ -142,7 +222,7 @@ export function OfficeForm({ currentOffice }: Props) {
 
          <Stack spacing={3}>
             <Grid container spacing={2}>
-               <Grid item xs={12} md={6}>
+               <Grid size={{ xs: 12, md: 6 }}>
                   <Field.Text
                      name="latitude"
                      label="Latitude"
@@ -152,7 +232,7 @@ export function OfficeForm({ currentOffice }: Props) {
                      helperText="Range: -90 to 90"
                   />
                </Grid>
-               <Grid item xs={12} md={6}>
+               <Grid size={{ xs: 12, md: 6 }}>
                   <Field.Text
                      name="longitude"
                      label="Longitude"
@@ -260,6 +340,7 @@ export function OfficeForm({ currentOffice }: Props) {
          <Form methods={methods} onSubmit={onSubmit}>
             <Stack spacing={3}>
                {renderDetails}
+               {!isCompanyOwner && renderCompany}
                {renderLocation}
                {renderRadiusSettings}
                {renderActions}
