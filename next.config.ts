@@ -41,7 +41,11 @@ const nextConfig: NextConfig = {
          },
          {
             protocol: 'https',
-            hostname: 'api.rkgtour.com',
+            hostname: 'api.masoq.id',
+         },
+         {
+            protocol: 'https',
+            hostname: 'api.demo.masoq.id',
          },
       ],
    },
