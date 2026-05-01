@@ -33,16 +33,20 @@ export async function POST(_req: NextRequest) {
       // Tetap lanjutkan hapus cookie lokal meskipun backend gagal
     }
 
-    // ─── Hapus semua auth cookie ──────────────────────────────────────────────
     const response = NextResponse.json({ success: true });
-    response.cookies.delete({
+    const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || '.masoq.id';
+    response.cookies.set({
       name: 'accessToken',
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      value: '',
+      maxAge: 0,
+      domain: cookieDomain,
       path: '/',
     });
-    response.cookies.delete({
+    response.cookies.set({
       name: 'refreshToken',
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      value: '',
+      maxAge: 0,
+      domain: cookieDomain,
       path: '/',
     });
 
@@ -50,16 +54,20 @@ export async function POST(_req: NextRequest) {
   } catch (error) {
     console.error('[Logout] Error:', error);
 
-    // Tetap hapus cookie lokal meskipun error
     const response = NextResponse.json({ success: false }, { status: 200 });
-    response.cookies.delete({
+    const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || '.masoq.id';
+    response.cookies.set({
       name: 'accessToken',
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      value: '',
+      maxAge: 0,
+      domain: cookieDomain,
       path: '/',
     });
-    response.cookies.delete({
+    response.cookies.set({
       name: 'refreshToken',
-      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      value: '',
+      maxAge: 0,
+      domain: cookieDomain,
       path: '/',
     });
 
