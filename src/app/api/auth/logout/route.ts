@@ -35,8 +35,16 @@ export async function POST(_req: NextRequest) {
 
     // ─── Hapus semua auth cookie ──────────────────────────────────────────────
     const response = NextResponse.json({ success: true });
-    response.cookies.delete('accessToken');
-    response.cookies.delete('refreshToken');
+    response.cookies.delete({
+      name: 'accessToken',
+      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      path: '/',
+    });
+    response.cookies.delete({
+      name: 'refreshToken',
+      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      path: '/',
+    });
 
     return response;
   } catch (error) {
@@ -44,8 +52,16 @@ export async function POST(_req: NextRequest) {
 
     // Tetap hapus cookie lokal meskipun error
     const response = NextResponse.json({ success: false }, { status: 200 });
-    response.cookies.delete('accessToken');
-    response.cookies.delete('refreshToken');
+    response.cookies.delete({
+      name: 'accessToken',
+      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      path: '/',
+    });
+    response.cookies.delete({
+      name: 'refreshToken',
+      domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+      path: '/',
+    });
 
     return response;
   }
